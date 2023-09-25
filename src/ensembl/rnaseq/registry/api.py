@@ -12,19 +12,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Unit tests of the main RNA-Seq registry module.
-"""
 
-import pytest
+"""RNA-Seq registry API module."""
 
-from ensembl.rnaseq.registry.api import RnaseqRegistry
+__all__ = [
+    "RnaseqRegistry",
+]
 
+class RnaseqRegistry:
+    """Interface for the RNA-Seq Registry.
+    """
 
-class TestRnaseqRegistry:
-    """Tests for the RNA-Seq registry module."""
-
-    def test_loading_fail(self) -> None:
-        """Simple check."""
-        reg = RnaseqRegistry('lorem.sqlite')
-        assert isinstance(reg, RnaseqRegistry)
+    def __init__(self, db: str) -> None:
+        self.db = db
