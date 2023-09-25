@@ -106,7 +106,7 @@ warn_unused_configs = true
 
 [tool.pytest.ini_options]
 addopts = "-v"
-testpaths = ["src/tests"]
+testpaths = ["tests"]
 norecursedirs = ["data", "docs", "*.egg_info"]
 filterwarnings = [
     "ignore::DeprecationWarning:argschema",
@@ -117,4 +117,3 @@ branch = true
 source = [
     "ensembl.rnaseq.registry",
 ]
-

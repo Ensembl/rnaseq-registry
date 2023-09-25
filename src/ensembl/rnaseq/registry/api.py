@@ -19,9 +19,9 @@ __all__ = [
     "RnaseqRegistry",
 ]
 
+
 class RnaseqRegistry:
-    """Interface for the RNA-Seq Registry.
-    """
+    """Interface for the RNA-Seq Registry."""
 
     def __init__(self, db: str) -> None:
         self.db = db
