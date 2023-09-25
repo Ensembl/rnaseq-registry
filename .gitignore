@@ -1,0 +1,6 @@
+**/__pycache__
+**/*.egg-info
+**/pip-wheel-metadata
+**/build
+**/.*_cache
+**/.coverage
