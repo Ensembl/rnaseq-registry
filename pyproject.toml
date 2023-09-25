@@ -105,7 +105,7 @@ show_error_codes = true
 warn_unused_configs = true
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=native --server=sqlite:///"
+addopts = "-v"
 testpaths = ["src/tests"]
 norecursedirs = ["data", "docs", "*.egg_info"]
 filterwarnings = [
