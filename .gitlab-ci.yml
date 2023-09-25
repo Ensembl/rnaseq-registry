@@ -1,0 +1,89 @@
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# CI/CD tests, essentially for Python
+
+variables:
+  RUN_DIR: ./cicd_runtime
+
+stages:
+  - test
+
+# Set up the Python environment
+.python:
+  stage: test
+  image: python:3.8
+  only:
+    changes:
+      - .gitlab-ci.yml
+      - pyproject.toml
+      - "*.py"
+      - src/**/*.py
+
+python:prepare_venv:
+  extends: .python
+  artifacts:
+    paths:
+      - $RUN_DIR
+  before_script:
+    - python -m venv $RUN_DIR/venv
+    - source $RUN_DIR/venv/bin/activate
+  script:
+    - pip install -e .[dev]
+
+.python:test:
+  extends: .python
+  needs:
+    - job: python:prepare_venv
+      artifacts: true
+  before_script:
+    - source $RUN_DIR/venv/bin/activate
+
+# Actual tests
+
+# Pylint
+.python:pylint:
+  extends: .python:test
+  variables:
+    PYLINT_CMD: pylint --rcfile pyproject.toml
+
+python:pylint:tests:
+  extends: .python:pylint
+  script:
+    - pylint src
+
+# Mypy
+.python:mypy:
+  extends: .python:test
+  variables:
+    MYPY_CMD: mypy --config-file pyproject.toml
+
+python:mypy:src:
+  extends: .python:mypy
+  script:
+    - mypy src
+
+# Black
+python:black:
+  extends: .python:test
+  allow_failure: true
+  script:
+    - black --config pyproject.toml --verbose --check .
+
+# Pytest
+python:pytest:
+  extends: .python:test
+  script:
+    - coverage run -m pytest --junitxml=$RUN_DIR/junit_reports.xml
