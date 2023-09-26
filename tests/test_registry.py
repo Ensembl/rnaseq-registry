@@ -26,5 +26,5 @@ class TestRnaseqRegistry:
 
     def test_loading_fail(self) -> None:
         """Simple check."""
-        reg = RnaseqRegistry('lorem.sqlite')
+        reg = RnaseqRegistry("lorem.sqlite")
         assert isinstance(reg, RnaseqRegistry)
