@@ -105,8 +105,8 @@ show_error_codes = true
 warn_unused_configs = true
 
 [tool.pytest.ini_options]
-addopts = "-v --tb=native --server=sqlite:///"
-testpaths = ["src/tests"]
+addopts = "-v"
+testpaths = ["tests"]
 norecursedirs = ["data", "docs", "*.egg_info"]
 filterwarnings = [
     "ignore::DeprecationWarning:argschema",
@@ -117,4 +117,3 @@ branch = true
 source = [
     "ensembl.rnaseq.registry",
 ]
-
