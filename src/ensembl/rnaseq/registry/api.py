@@ -27,32 +27,34 @@ class RnaseqRegistry:
 
     def __init__(self, db: str) -> None:
         self.db = db
-        self.engine = create_engine(f'sqlite:///{db}', echo=True)
-        
+        self.engine = create_engine(f"sqlite:///{db}", echo=True)
 
     def create_load(self):
         metadata = MetaData()
 
         dataset = Table(
-            'dataset', metadata,
-            Column('name', String, primary_key=True),
-            Column('organism', String))
-        
+            "dataset", metadata, Column("name", String, primary_key=True), Column("organism", String)
+        )
+
         sample = Table(
-            'sample', metadata,
-            Column('SRA accession', String, primary_key=True),
-            Column('dataset', String))
-        
+            "sample", metadata, Column("SRA accession", String, primary_key=True), Column("dataset", String)
+        )
+
         organism = Table(
-            'organism', metadata,
-            Column('organism_abbrv', String, primary_key=True),
-            Column('component', String))
-       
+            "organism",
+            metadata,
+            Column("organism_abbrv", String, primary_key=True),
+            Column("component", String),
+        )
+
         metadata.create_all(self.engine)
+
 
 class InputSchema(argschema.ArgSchema):
     """Input arguments expected by the entry point of this module."""
+
     dbname = argschema.fields.String(required=True, metadata={"descriptions": "Database name for sqllite"})
+
 
 def main():
     """Main script entry-point."""
@@ -60,7 +62,6 @@ def main():
     registry = RnaseqRegistry(mod.args["dbname"])
     registry.create_load()
 
+
 if __name__ == "__main__":
     main()
-    
-
