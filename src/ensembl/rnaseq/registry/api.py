@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import declarative_base
-from database_schema import dataset, sample, organism
+from ensembl.rnaseq.registry.database_schema import dataset, sample, organism
 import argschema
 
 
