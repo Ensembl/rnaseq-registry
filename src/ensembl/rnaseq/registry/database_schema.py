@@ -13,22 +13,16 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import List
-from typing import Optional
 from sqlalchemy.orm import Mapped , mapped_column, relationship, DeclarativeBase
-from sqlalchemy import create_engine, Table, Column, Integer, String, MetaData
-import argschema
-
+from sqlalchemy import String
 
 class Base(DeclarativeBase):
     pass
     
 class dataset(Base):
     __tablename__= "dataset"
-
     name: Mapped[str] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column(String)
-    
     
     def __repr__(self) -> str:
         return f"dataset(name={self.name!r}, organism={self.organism!r})"
@@ -38,7 +32,6 @@ class sample(Base):
     """Sample table class
     """
     __tablename__= "sample"
-
     SRA_accession: Mapped[str] = mapped_column(primary_key=True, nullable=False)
     dataset: Mapped[str] = mapped_column(String, nullable=False)
 
@@ -49,10 +42,11 @@ class organism(Base):
     """Organisms table class    
     """
     __tablename__= "organism"
-
     organism_abbrv: Mapped[str] = mapped_column(primary_key=True)
     component: Mapped[str] = mapped_column(String)
 
+    def __repr__(self) -> str:
+        return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component!r})"
 
 
 

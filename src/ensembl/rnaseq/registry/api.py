@@ -1,8 +1,8 @@
 from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 from sqlalchemy.orm import declarative_base
-from ensembl.rnaseq.registry.database_schema import dataset, sample, organism
 import argschema
+from ensembl.rnaseq.registry.database_schema import dataset, organism, sample
+
 
 
 Base = declarative_base()
@@ -26,6 +26,9 @@ def main():
     mod = argschema.ArgSchemaParser(schema_type=InputSchema)
     dbname = mod.args["dbname"]
     engine = create_engine(f"sqlite:///{dbname}", echo=True)
+    dataset()
+    organism()
+    sample()
 
     # Create tables
     Base.metadata.create_all(engine)
