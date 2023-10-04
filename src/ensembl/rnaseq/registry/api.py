@@ -3,10 +3,7 @@ from sqlalchemy.orm import declarative_base
 import argschema
 from ensembl.rnaseq.registry.database_schema import dataset, organism, sample
 
-
-
 Base = declarative_base()
-
 
 class RnaseqRegistry:
     """Interface for the RNA-Seq Registry."""
@@ -25,13 +22,11 @@ def main():
     """Main script entry-point."""
     mod = argschema.ArgSchemaParser(schema_type=InputSchema)
     dbname = mod.args["dbname"]
-    engine = create_engine(f"sqlite:///{dbname}", echo=True)
     dataset()
     organism()
     sample()
-
-    # Create tables
-    Base.metadata.create_all(engine)
+    engine = create_engine(f"sqlite:///{dbname}", echo=True,  future=True)
+    Base.metadata.create_all(bind=engine)
 
 
 if __name__ == "__main__":

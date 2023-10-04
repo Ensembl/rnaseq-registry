@@ -12,14 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-from sqlalchemy.orm import Mapped , mapped_column, relationship, DeclarativeBase
+from sqlalchemy.orm import Mapped , mapped_column, DeclarativeBase
 from sqlalchemy import String
 
 class Base(DeclarativeBase):
     pass
-    
+
 class dataset(Base):
+    """Create a table dataset
+    """
     __tablename__= "dataset"
     name: Mapped[str] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column(String)
@@ -29,7 +30,7 @@ class dataset(Base):
 
 
 class sample(Base):
-    """Sample table class
+    """Create a table sample
     """
     __tablename__= "sample"
     SRA_accession: Mapped[str] = mapped_column(primary_key=True, nullable=False)
@@ -39,7 +40,7 @@ class sample(Base):
         return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
 
 class organism(Base):
-    """Organisms table class    
+    """Create a table organism
     """
     __tablename__= "organism"
     organism_abbrv: Mapped[str] = mapped_column(primary_key=True)
@@ -47,6 +48,4 @@ class organism(Base):
 
     def __repr__(self) -> str:
         return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component!r})"
-
-
 
