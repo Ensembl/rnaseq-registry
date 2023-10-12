@@ -13,23 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from sqlalchemy.orm import Mapped , mapped_column, DeclarativeBase
-from sqlalchemy import String
-
+from sqlalchemy import String, create_engine
 class Base(DeclarativeBase):
     pass
 
-class dataset(Base):
+class Dataset(Base):
     """Create a table dataset
     """
     __tablename__= "dataset"
     name: Mapped[str] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column(String)
+    #sample = relationship("Sample")
     
     def __repr__(self) -> str:
         return f"dataset(name={self.name!r}, organism={self.organism!r})"
 
-
-class sample(Base):
+class Sample(Base):
     """Create a table sample
     """
     __tablename__= "sample"
@@ -39,7 +38,7 @@ class sample(Base):
     def __repr__(self) -> str:
         return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
 
-class organism(Base):
+class Organism(Base):
     """Create a table organism
     """
     __tablename__= "organism"
@@ -49,3 +48,9 @@ class organism(Base):
     def __repr__(self) -> str:
         return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component!r})"
 
+class create_db():
+    def __init__(self,dbname)-> None:
+        """create database tables if they do not exist already."""
+        engine = create_engine(f"sqlite:///{dbname}", echo=True,  future=True)
+        Base.metadata.create_all(bind=engine)
+     
