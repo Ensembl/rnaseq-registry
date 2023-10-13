@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from sqlalchemy.orm import Mapped , mapped_column, DeclarativeBase
 from sqlalchemy import String, create_engine
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+
 class Base(DeclarativeBase):
     pass
 
