@@ -20,8 +20,13 @@ __all__ = [
     "RnaseqRegistry",
 ]
 
+
 class RnaseqRegistry:
     """Interface for the RNA-Seq Registry."""
 
     def __init__(self, engine) -> None:
-        Base.metadata.create_all(bind=engine)
+        self.engine = engine
+
+    def create_db(self) -> None:
+        """Populate a database with the SQLalchemy-defined schema."""
+        Base.metadata.create_all(bind=self.engine)

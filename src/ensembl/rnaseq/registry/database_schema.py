@@ -1,4 +1,4 @@
-  # See the NOTICE file distributed with this work for additional information
+# See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,38 +12,44 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
+"""Schema in SQLAlchemy to describe RNA-Seq datasets."""
+
 from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
 
 class Base(DeclarativeBase):
-    pass
+    """Import declarative Base."""
+
 
 class Dataset(Base):
-    """Create a table dataset
-    """
-    __tablename__= "dataset"
+    """Create a table dataset"""
+
+    __tablename__ = "dataset"
     name: Mapped[str] = mapped_column(primary_key=True)
     organism: Mapped[str] = mapped_column(String)
-    #sample = relationship("Sample")
-    
+    # sample = relationship("Sample")
+
     def __repr__(self) -> str:
         return f"dataset(name={self.name!r}, organism={self.organism!r})"
 
+
 class Sample(Base):
-    """Create a table sample
-    """
-    __tablename__= "sample"
+    """Create a table sample"""
+
+    __tablename__ = "sample"
     SRA_accession: Mapped[str] = mapped_column(primary_key=True, nullable=False)
     dataset: Mapped[str] = mapped_column(String, nullable=False)
 
     def __repr__(self) -> str:
         return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
 
+
 class Organism(Base):
-    """Create a table organism
-    """
-    __tablename__= "organism"
+    """Create a table organism"""
+
+    __tablename__ = "organism"
     organism_abbrv: Mapped[str] = mapped_column(primary_key=True)
     component: Mapped[str] = mapped_column(String)
 
