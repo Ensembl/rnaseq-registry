@@ -50,8 +50,8 @@ class Organism(Base):
         return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component!r})"
 
 class create_db():
-    def __init__(self,dbname)-> None:
+    def __init__(self,db)-> None:
         """create database tables if they do not exist already."""
-        engine = create_engine(f"sqlite:///{dbname}", echo=True,  future=True)
+        engine = create_engine(f"sqlite:///{db}.sqlite", echo=True,  future=True)
         Base.metadata.create_all(bind=engine)
      

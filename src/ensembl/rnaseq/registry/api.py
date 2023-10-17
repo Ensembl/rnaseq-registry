@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from ensembl.rnaseq.registry.database_schema import create_db
+from sqlalchemy import String, create_engine
 import argparse
 
 """RNA-Seq registry API module."""
@@ -37,7 +38,8 @@ def main():
                         help="Database name for RNA-Seq registry")
     args = parser.parse_args()
     db = args.dbname
-    create_db(db)
+    engine = create_engine(f"sqlite:///{db}.sqlite", echo=True,  future=True)
+    create_db(engine)
 
 if __name__ == "__main__":
     main()
