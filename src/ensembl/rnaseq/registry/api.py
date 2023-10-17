@@ -14,6 +14,8 @@
 # limitations under the License.
 """RNA-Seq registry API module."""
 
+from sqlalchemy import Engine
+
 from ensembl.rnaseq.registry.database_schema import Base
 
 __all__ = [
@@ -24,7 +26,12 @@ __all__ = [
 class RnaseqRegistry:
     """Interface for the RNA-Seq Registry."""
 
-    def __init__(self, engine) -> None:
+    def __init__(self, engine: Engine) -> None:
+        """Create the Registry interface with the provided engine.
+
+        Args:
+            engine: Predefined engine to use.
+        """
         self.engine = engine
 
     def create_db(self) -> None:
