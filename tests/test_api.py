@@ -13,38 +13,39 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """
-Unit tests of the main RNA-Seq schema module.
+Unit tests for the RNA-Seq registry API.
 """
 
 import pytest
-from sqlalchemy import inspect
+from sqlalchemy import inspect, create_engine, Engine
 
-from ensembl.rnaseq.registry.database_schema import Base, Dataset, Sample, Organism, create_db
+from ensembl.rnaseq.registry.api import RnaseqRegistry
 
 
-class Test_schema:
-    """Tests for the database_schema registry module."""
+class Test_RNASeqRegistry:
+    """Tests for the RNASeqRegistry module."""
 
-    @pytest.fixture(scope='module')
-    def engine(self) -> "Engine":
+    @pytest.fixture(scope="module")
+    def engine(self) -> Engine:
         """
         Generate the Engine. Use an in-memory DB.
         """
-        test_db = "test_db"
-        test_engine = create_db(test_db)
-        assert isinstance(test_engine, create_db)
-        print(test_db)
+        test_engine = create_engine("sqlite:///:memory:")
         return test_engine
-        
-    
-    def test_create_tables(self, engine: "Engine") -> None:
+
+    def test_init(self, engine: Engine) -> None:
+        """Check the RNASeqRegistry object can be created."""
+        reg = RnaseqRegistry(engine)
+        assert isinstance(reg, RnaseqRegistry)
+
+    def test_create_tables(self, engine: Engine) -> None:
         """Test creating tables from scratch."""
-        
-        insp = inspect(engine)
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+
         # Check if the tables are created in the test database file
+        insp = inspect(reg.engine)
         assert insp.has_table("dataset")
         assert insp.has_table("sample")
         assert insp.has_table("organism")
-
-
-    
