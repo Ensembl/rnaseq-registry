@@ -45,6 +45,7 @@ def create_db(args):
         if not args.force:
             print(f"Database already exists: {db}")
             return
+        Path(db).unlink()
         print(f"Recreate the database {db} from scratch")
     else:
         print(f"Create the new database {db}")
