@@ -24,6 +24,8 @@ from pathlib import Path
 import argparse
 from sqlalchemy import create_engine
 
+from ensembl.rnaseq.registry.api import RnaseqRegistry
+
 
 def get_engine(dbfile: PathLike):
     """Returns an SQLalchemy engine.
@@ -47,8 +49,11 @@ def create_db(args):
     else:
         print(f"Create the new database {db}")
 
-    get_engine(args.database)
+    engine = get_engine(args.database)
     # SQLAlchemy create_db here
+
+    reg = RnaseqRegistry(engine)
+    reg.create_db()
 
 
 def main() -> None:

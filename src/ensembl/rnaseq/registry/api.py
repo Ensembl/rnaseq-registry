@@ -12,11 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from ensembl.rnaseq.registry.database_schema import create_db
-from sqlalchemy import String, create_engine
-import argparse
-
 """RNA-Seq registry API module."""
+
+from ensembl.rnaseq.registry.database_schema import Base
 
 __all__ = [
     "RnaseqRegistry",
@@ -25,21 +23,5 @@ __all__ = [
 class RnaseqRegistry:
     """Interface for the RNA-Seq Registry."""
 
-    def __init__(self, db: str) -> None:
-        self.db = db
-
-def main():
-    """Main script entry-point."""
-    
-    parser = argparse.ArgumentParser(
-        description=("Create database tables for RNA-Seq registry"),
-    )
-    parser.add_argument("--dbname", type=str, required=True, 
-                        help="Database name for RNA-Seq registry")
-    args = parser.parse_args()
-    db = args.dbname
-    engine = create_engine(f"sqlite:///{db}.sqlite", echo=True,  future=True)
-    create_db(engine)
-
-if __name__ == "__main__":
-    main()
+    def __init__(self, engine) -> None:
+        Base.metadata.create_all(bind=engine)

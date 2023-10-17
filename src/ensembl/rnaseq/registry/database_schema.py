@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from sqlalchemy import String, create_engine
+from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+
 
 class Base(DeclarativeBase):
     pass
@@ -48,10 +49,3 @@ class Organism(Base):
 
     def __repr__(self) -> str:
         return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component!r})"
-
-class create_db():
-    def __init__(self,db)-> None:
-        """create database tables if they do not exist already."""
-        engine = create_engine(f"sqlite:///{db}.sqlite", echo=True,  future=True)
-        Base.metadata.create_all(bind=engine)
-     
