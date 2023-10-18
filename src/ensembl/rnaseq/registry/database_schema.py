@@ -15,8 +15,10 @@
 
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
-from sqlalchemy import String
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+from typing import List
+from sqlalchemy import String, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, Mapped
+from sqlalchemy.orm import mapped_column, relationship
 
 
 __all__ = ["Base", "Dataset", "Sample", "Organism"]
@@ -30,9 +32,15 @@ class Dataset(Base):
     """Create a table dataset"""
 
     __tablename__ = "dataset"
-    name: Mapped[str] = mapped_column(primary_key=True)
-    organism: Mapped[str] = mapped_column(String)
-    # sample = relationship("Sample")
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    organism: Mapped[str] = mapped_column(ForeignKey("organism.id"))
+
+    # Relationships
+    samples: Mapped[List["Sample"]] = relationship(
+        back_populates="dataset", cascade="all"
+    )
 
     def __repr__(self) -> str:
         return f"dataset(name={self.name!r}, organism={self.organism!r})"
@@ -42,8 +50,11 @@ class Sample(Base):
     """Create a table sample"""
 
     __tablename__ = "sample"
-    SRA_accession: Mapped[str] = mapped_column(primary_key=True, nullable=False)
-    dataset: Mapped[str] = mapped_column(String, nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String)
+    SRA_accession: Mapped[str] = mapped_column(nullable=False)
+    dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id"))
+    dataset: Mapped["Dataset"] = relationship(back_populates="samples")
 
     def __repr__(self) -> str:
         return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
@@ -53,8 +64,26 @@ class Organism(Base):
     """Create a table organism"""
 
     __tablename__ = "organism"
-    organism_abbrv: Mapped[str] = mapped_column(primary_key=True)
-    component: Mapped[str] = mapped_column(String)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    organism_abbrv: Mapped[str] = mapped_column(String)
+    component_id: Mapped[str] = mapped_column(ForeignKey("component.id"))
+    component: Mapped["Component"] = relationship(back_populates="organisms")
 
     def __repr__(self) -> str:
-        return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component!r})"
+        return f"organism(organism_abbrv={self.organism_abbrv!r}, component={self.component_id!r})"
+
+
+class Component(Base):
+    """Create a table component"""
+
+    __tablename__ = "component"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+
+    # Relationships
+    organisms: Mapped[List[Organism]] = relationship(
+        back_populates="component", cascade="all"
+    )
+
+    def __repr__(self) -> str:
+        return f"component(name={self.name!r}))"
