@@ -27,9 +27,7 @@ class Test_RNASeqRegistry:
 
     @pytest.fixture(scope="module")
     def engine(self) -> Engine:
-        """
-        Generate the Engine. Use an in-memory DB.
-        """
+        """Generate the Engine. Use an in-memory DB."""
         test_engine = create_engine("sqlite:///:memory:")
         return test_engine
 

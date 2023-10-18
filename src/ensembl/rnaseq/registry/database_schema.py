@@ -19,6 +19,11 @@ from sqlalchemy import String
 from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
 
+__all__ = [
+    "Base", "Dataset", "Sample", "Organism"
+]
+
+
 class Base(DeclarativeBase):
     """Import declarative Base."""
 
