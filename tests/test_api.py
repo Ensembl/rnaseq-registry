@@ -26,7 +26,7 @@ from ensembl.rnaseq.registry.api import RnaseqRegistry
 class Test_RNASeqRegistry:
     """Tests for the RNASeqRegistry module."""
 
-    @pytest.fixture(scope="module")
+    @pytest.fixture(scope="function")
     def engine(self) -> Engine:
         """Generate the Engine. Use an in-memory DB."""
         test_engine = create_engine("sqlite:///:memory:")
