@@ -34,7 +34,7 @@ def get_engine(dbfile: PathLike):
         dbfile (PathLike): Path to the SQLite file to use as registry.
     """
     db_url = f"sqlite:///{dbfile}"
-    return create_engine(db_url, echo=True)
+    return create_engine(db_url)
 
 
 def create_db(args):
@@ -57,6 +57,26 @@ def create_db(args):
     reg.create_db()
 
 
+def change_component(args):
+    """Actions for the subcommand "component"."""
+    engine = get_engine(args.database)
+    reg = RnaseqRegistry(engine)
+
+    if args.add:
+        reg.add_component(args.add)
+
+    if args.get:
+        component = reg.get_component(args.get)
+        print(component)
+
+    if args.remove:
+        reg.remove_component(args.remove)
+
+    if args.list:
+        components = reg.list_components()
+        print(components)
+
+
 def main() -> None:
     """Main script entry-point."""
     parser = argparse.ArgumentParser()
@@ -67,6 +87,15 @@ def main() -> None:
     create_parser.set_defaults(func=create_db)
     create_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
     create_parser.add_argument("--force", action="store_true", help="Replace if the db already exists")
+
+    # Component submenu
+    component_parser = subparsers.add_parser("component")
+    component_parser.set_defaults(func=change_component)
+    component_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
+    component_parser.add_argument("--add", help="Name of a component to add")
+    component_parser.add_argument("--remove", help="Name of a component to remove")
+    component_parser.add_argument("--get", help="Name of a component to show")
+    component_parser.add_argument("--list", action="store_true", help="Print the list of components")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
