@@ -43,6 +43,7 @@ classifiers = [
 dependencies = [
     "argschema >= 3.0.4",
     "jsonschema >= 4.6.0",
+    "sqlalchemy >= 1.4",
 ]
 
 [project.optional-dependencies]
@@ -56,6 +57,7 @@ dev = [
 ]
 
 [project.scripts]
+rnaseq_registry = "ensembl.rnaseq.registry.cli:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

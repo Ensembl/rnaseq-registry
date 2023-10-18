@@ -12,8 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """RNA-Seq registry API module."""
+
+from sqlalchemy import Engine
+
+from ensembl.rnaseq.registry.database_schema import Base
 
 __all__ = [
     "RnaseqRegistry",
@@ -23,5 +26,14 @@ __all__ = [
 class RnaseqRegistry:
     """Interface for the RNA-Seq Registry."""
 
-    def __init__(self, db: str) -> None:
-        self.db = db
+    def __init__(self, engine: Engine) -> None:
+        """Create the Registry interface with the provided engine.
+
+        Args:
+            engine: Predefined engine to use.
+        """
+        self.engine = engine
+
+    def create_db(self) -> None:
+        """Populate a database with the SQLalchemy-defined schema."""
+        Base.metadata.create_all(bind=self.engine)
