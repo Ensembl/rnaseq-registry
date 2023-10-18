@@ -14,9 +14,13 @@
 # limitations under the License.
 """RNA-Seq registry API module."""
 
-from sqlalchemy import Engine
+from typing import List
 
-from ensembl.rnaseq.registry.database_schema import Base
+from sqlalchemy import Engine
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from ensembl.rnaseq.registry.database_schema import Base, Component
 
 __all__ = [
     "RnaseqRegistry",
@@ -37,3 +41,36 @@ class RnaseqRegistry:
     def create_db(self) -> None:
         """Populate a database with the SQLalchemy-defined schema."""
         Base.metadata.create_all(bind=self.engine)
+
+    def add_component(self, name: str) -> Component:
+        """Insert a new component."""
+        new_comp = Component(name=name)
+        with Session(self.engine) as session:
+            session.add(new_comp)
+            session.commit()
+        return new_comp
+
+    def get_component(self, name: str) -> Component:
+        """Retrieve a component."""
+        stmt = select(Component).where(Component.name == name)
+        with Session(self.engine) as session:
+            component = session.scalars(stmt).first()
+
+        if not component:
+            raise ValueError(f"No component named {name}")
+        return component
+
+    def remove_component(self, name: str) -> None:
+        """Delete a component."""
+        component = self.get_component(name)
+        with Session(self.engine) as session:
+            session.delete(component)
+            session.commit()
+
+    def list_components(self) -> List[Component]:
+        """Delete a component."""
+
+        stmt = select(Component)
+        with Session(self.engine) as session:
+            components = list(session.scalars(stmt))
+        return components
