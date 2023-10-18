@@ -17,7 +17,8 @@ Unit tests for the RNA-Seq registry API.
 """
 
 import pytest
-from sqlalchemy import inspect, create_engine, Engine
+from sqlalchemy import inspect, create_engine
+from sqlalchemy.engine import Engine
 
 from ensembl.rnaseq.registry.api import RnaseqRegistry
 
@@ -47,3 +48,23 @@ class Test_RNASeqRegistry:
         assert insp.has_table("dataset")
         assert insp.has_table("sample")
         assert insp.has_table("organism")
+
+    def test_add_get_component(self, engine: Engine) -> None:
+        """Test adding a new component."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+
+        reg.add_component("TestDB")
+        reg.get_component("TestDB")
+        assert reg
+
+    def test_remove_component(self, engine: Engine) -> None:
+        """Test removing a component."""
+
+        db_name = "TestDB"
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.add_component(db_name)
+        assert reg.get_component(db_name)
+        reg.remove_component(db_name)
