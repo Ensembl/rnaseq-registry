@@ -68,3 +68,16 @@ class Test_RNASeqRegistry:
         reg.add_component(db_name)
         assert reg.get_component(db_name)
         reg.remove_component(db_name)
+
+    def test_add_get_organism(self, engine: Engine) -> None:
+        """Test adding a new organism."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+
+        org = "speciesA"
+        comp = "TestDB"
+        reg.add_component(comp)
+        reg.add_organism(org, comp)
+        org = reg.get_organism(org)
+        assert org
