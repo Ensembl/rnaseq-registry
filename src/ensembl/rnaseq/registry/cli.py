@@ -77,6 +77,29 @@ def change_component(args):
         print(components)
 
 
+def change_organism(args):
+    """Actions for the subcommand "organism"."""
+    engine = get_engine(args.database)
+    reg = RnaseqRegistry(engine)
+
+    if args.add:
+        if not args.component:
+            print("Need a component for the organism")
+            raise ValueError("Need a component")
+        reg.add_organism(args.add, args.component)
+
+    if args.get:
+        organism = reg.get_organism(args.get)
+        print(organism)
+
+    if args.remove:
+        reg.remove_organism(args.remove)
+
+    if args.list:
+        organisms = reg.list_organisms()
+        print(organisms)
+
+
 def main() -> None:
     """Main script entry-point."""
     parser = argparse.ArgumentParser()
@@ -96,6 +119,16 @@ def main() -> None:
     component_parser.add_argument("--remove", help="Name of a component to remove")
     component_parser.add_argument("--get", help="Name of a component to show")
     component_parser.add_argument("--list", action="store_true", help="Print the list of components")
+
+    # Component submenu
+    organism_parser = subparsers.add_parser("organism")
+    organism_parser.set_defaults(func=change_organism)
+    organism_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
+    organism_parser.add_argument("--component", help="Name of a component")
+    organism_parser.add_argument("--add", help="Name of a organism to add")
+    organism_parser.add_argument("--remove", help="Name of a organism to remove")
+    organism_parser.add_argument("--get", help="Name of a organism to show")
+    organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
