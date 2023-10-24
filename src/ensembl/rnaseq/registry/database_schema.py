@@ -82,4 +82,4 @@ class Component(Base):
     organisms: Mapped[List[Organism]] = relationship(back_populates="component", cascade="all", lazy="joined")
 
     def __repr__(self) -> str:
-        return f"component(name={self.name!r}))"
+        return f"component(name={self.name!r}, organisms={len(self.organisms)})"
