@@ -79,5 +79,5 @@ class Test_RNASeqRegistry:
         comp = "TestDB"
         reg.add_component(comp)
         reg.add_organism(org, comp)
-        org = reg.get_organism(org)
-        assert org
+        organism = reg.get_organism(org)
+        assert organism
