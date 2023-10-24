@@ -85,7 +85,9 @@ class RnaseqRegistry:
 
     def get_organism(self, name: str) -> Organism:
         """Retrieve an organism."""
-        stmt = select(Organism).options(joinedload(Organism.component)).where(Organism.organism_abbrev == name)
+        stmt = (
+            select(Organism).options(joinedload(Organism.component)).where(Organism.organism_abbrev == name)
+        )
 
         organism = self.session.scalars(stmt).first()
 
