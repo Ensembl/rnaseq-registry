@@ -29,6 +29,7 @@ class Test_RNASeqRegistry:
 
     @pytest.fixture
     def orgs_file(self):
+        """Location of the organism file."""
         cur_dir = Path(inspect.getfile(inspect.currentframe())).parent
         return Path(cur_dir, "data", "orgs_file.tab")
 
