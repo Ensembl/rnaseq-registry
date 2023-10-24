@@ -15,6 +15,8 @@
 """RNA-Seq registry API module."""
 
 from typing import List
+from pathlib import Path
+from os import PathLike
 
 from sqlalchemy import Engine
 from sqlalchemy import select
@@ -52,13 +54,16 @@ class RnaseqRegistry:
         self.session.commit()
         return new_comp
 
-    def get_component(self, name: str) -> Component:
+    def get_component(self, name: str, create: bool = False) -> Component:
         """Retrieve a component."""
         stmt = select(Component).where(Component.name == name)
         component = self.session.scalars(stmt).first()
 
         if not component:
-            raise ValueError(f"No component named {name}")
+            if create:
+                component = self.add_component(name)
+            else:
+                raise ValueError(f"No component named {name}")
         return component
 
     def remove_component(self, name: str) -> None:
@@ -76,7 +81,10 @@ class RnaseqRegistry:
 
     def add_organism(self, name: str, component_name: str) -> Organism:
         """Insert a new organism."""
-        component = self.get_component(component_name)
+        try:
+            component = self.get_component(component_name)
+        except ValueError as err:
+            raise ValueError("Cannot add organism for unknown component") from err
 
         new_org = Organism(organism_abbrev=name, component=component)
         self.session.add(new_org)
@@ -107,3 +115,32 @@ class RnaseqRegistry:
         stmt = select(Organism)
         organisms = list(self.session.scalars(stmt).unique().all())
         return organisms
+
+    def load_organisms(self, input_file: PathLike) -> int:
+        """Import organisms and their components from a file."""
+
+        loaded_count = 0
+
+        components = {}
+        to_insert = []
+        with Path(input_file).open("r") as in_data:
+            for line in in_data:
+                line = line.strip()
+                if line == "":
+                    continue
+                parts = line.split("\t")
+                if len(parts) != 2:
+                    raise ValueError(f"Organism line requires 2 values (got {parts})")
+                (component_name, organism_name) = parts
+
+                if component_name not in components:
+                    components[component_name] = self.get_component(component_name, create = True)
+                
+                to_insert.append(Organism(organism_abbrev=organism_name, component = components[component_name]))
+
+                loaded_count += 1
+
+        self.session.add_all(to_insert)
+        self.session.commit()
+        
+        return loaded_count
