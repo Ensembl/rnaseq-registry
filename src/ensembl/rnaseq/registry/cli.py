@@ -99,6 +99,10 @@ def change_organism(args):
         organisms = reg.list_organisms()
         print(organisms)
 
+    if args.load:
+        loaded_count = reg.load_organisms(args.load)
+        print(f"Loaded {loaded_count} organisms")
+
 
 def main() -> None:
     """Main script entry-point."""
@@ -129,6 +133,9 @@ def main() -> None:
     organism_parser.add_argument("--remove", help="Name of a organism to remove")
     organism_parser.add_argument("--get", help="Name of a organism to show")
     organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
+    organism_parser.add_argument(
+        "--load", help="Load organisms and components from a tab file (component\torganism_abbrev)"
+    )
 
     # Parse args and start the submenu action
     args = parser.parse_args()
