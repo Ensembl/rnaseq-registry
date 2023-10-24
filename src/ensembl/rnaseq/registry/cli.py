@@ -65,14 +65,14 @@ def change_component(args):
     if args.add:
         reg.add_component(args.add)
 
-    if args.get:
+    elif args.get:
         component = reg.get_component(args.get)
         print(component)
 
-    if args.remove:
+    elif args.remove:
         reg.remove_component(args.remove)
 
-    if args.list:
+    elif args.list:
         components = reg.list_components()
         print(components)
 
@@ -88,18 +88,18 @@ def change_organism(args):
             raise ValueError("Need a component")
         reg.add_organism(args.add, args.component)
 
-    if args.get:
+    elif args.get:
         organism = reg.get_organism(args.get)
         print(organism)
 
-    if args.remove:
+    elif args.remove:
         reg.remove_organism(args.remove)
 
-    if args.list:
+    elif args.list:
         organisms = reg.list_organisms()
         print(organisms)
 
-    if args.load:
+    elif args.load:
         loaded_count = reg.load_organisms(args.load)
         print(f"Loaded {loaded_count} organisms")
 
@@ -139,10 +139,7 @@ def main() -> None:
 
     # Parse args and start the submenu action
     args = parser.parse_args()
-    try:
-        args.func(args)
-    except AttributeError:
-        parser.print_help()
+    args.func(args)
 
 
 if __name__ == "__main__":

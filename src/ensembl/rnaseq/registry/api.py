@@ -134,13 +134,15 @@ class RnaseqRegistry:
                 (component_name, organism_name) = parts
 
                 if component_name not in components:
-                    components[component_name] = self.get_component(component_name, create = True)
-                
-                to_insert.append(Organism(organism_abbrev=organism_name, component = components[component_name]))
+                    components[component_name] = self.get_component(component_name, create=True)
+
+                to_insert.append(
+                    Organism(organism_abbrev=organism_name, component=components[component_name])
+                )
 
                 loaded_count += 1
 
         self.session.add_all(to_insert)
         self.session.commit()
-        
+
         return loaded_count
