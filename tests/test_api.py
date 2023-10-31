@@ -101,3 +101,16 @@ class Test_RNASeqRegistry:
         assert species_a
         test_component = reg.get_component("TestDB")
         assert test_component
+
+        # Check counts
+        num_components = len(reg.list_components())
+        num_organisms = len(reg.list_organisms())
+        assert num_components == 2
+        assert num_organisms == 3
+
+        # Try to load again, should not fail, and not load anything new
+        reg.load_organisms(orgs_file)
+        num_components_after = len(reg.list_components())
+        num_organisms_after = len(reg.list_organisms())
+        assert num_components == num_components_after
+        assert num_organisms == num_organisms_after
