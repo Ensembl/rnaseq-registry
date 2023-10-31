@@ -139,7 +139,11 @@ def main() -> None:
 
     # Parse args and start the submenu action
     args = parser.parse_args()
-    args.func(args)
+
+    try:
+        args.func(args)
+    except AttributeError as err:
+        parser.print_help()
 
 
 if __name__ == "__main__":
