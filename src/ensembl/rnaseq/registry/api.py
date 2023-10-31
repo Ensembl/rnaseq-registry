@@ -119,10 +119,13 @@ class RnaseqRegistry:
     def load_organisms(self, input_file: PathLike) -> int:
         """Import organisms and their components from a file."""
 
-        loaded_count = 0
+        # First, get the existing components and abbrevs
+        components = {comp.name: comp for comp in self.list_components()}
+        abbrevs = {org.organism_abbrev for comp in components.values() for org in comp.organisms}
 
-        components = {}
-        to_insert = []
+        # Next, get the list of new components and abbrevs, minus the known ones
+        new_orgs_data = []
+        loaded_count = 0
         with Path(input_file).open("r") as in_data:
             for line in in_data:
                 line = line.strip()
@@ -133,16 +136,26 @@ class RnaseqRegistry:
                     raise ValueError(f"Organism line requires 2 values (got {parts})")
                 (component_name, organism_name) = parts
 
+                # On the fly, create the new components
                 if component_name not in components:
-                    components[component_name] = self.get_component(component_name, create=True)
-
-                to_insert.append(
-                    Organism(organism_abbrev=organism_name, component=components[component_name])
-                )
+                    components[component_name] = self.add_component(component_name)
+                
+                if organism_name in abbrevs:
+                    continue
+                abbrevs.add(organism_name)
+            
+                new_orgs_data.append({"name": organism_name, "component": component_name})
+        
+        # Now that we've created all the components, add the organisms attached to them
+        orgs_to_add = []
+        for new_org_data in new_orgs_data:
+                org_component = new_org_data["component"]
+                new_org = Organism(organism_abbrev=new_org_data["name"], component=components[org_component])
+                orgs_to_add.append(new_org)
 
                 loaded_count += 1
 
-        self.session.add_all(to_insert)
+        self.session.add_all(orgs_to_add)
         self.session.commit()
 
         return loaded_count
