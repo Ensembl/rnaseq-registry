@@ -14,9 +14,14 @@
 # limitations under the License.
 """RNA-Seq registry API module."""
 
-from sqlalchemy import Engine
+from typing import List
 
-from ensembl.rnaseq.registry.database_schema import Base
+from sqlalchemy import Engine
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+from sqlalchemy.orm import joinedload
+
+from ensembl.rnaseq.registry.database_schema import Base, Component, Organism
 
 __all__ = [
     "RnaseqRegistry",
@@ -33,7 +38,72 @@ class RnaseqRegistry:
             engine: Predefined engine to use.
         """
         self.engine = engine
+        with Session(engine) as session:
+            self.session = session
 
     def create_db(self) -> None:
         """Populate a database with the SQLalchemy-defined schema."""
         Base.metadata.create_all(bind=self.engine)
+
+    def add_component(self, name: str) -> Component:
+        """Insert a new component."""
+        new_comp = Component(name=name)
+        self.session.add(new_comp)
+        self.session.commit()
+        return new_comp
+
+    def get_component(self, name: str) -> Component:
+        """Retrieve a component."""
+        stmt = select(Component).where(Component.name == name)
+        component = self.session.scalars(stmt).first()
+
+        if not component:
+            raise ValueError(f"No component named {name}")
+        return component
+
+    def remove_component(self, name: str) -> None:
+        """Delete a component."""
+        component = self.get_component(name)
+        self.session.delete(component)
+        self.session.commit()
+
+    def list_components(self) -> List[Component]:
+        """List all components."""
+
+        stmt = select(Component)
+        components = list(self.session.scalars(stmt).unique().all())
+        return components
+
+    def add_organism(self, name: str, component_name: str) -> Organism:
+        """Insert a new organism."""
+        component = self.get_component(component_name)
+
+        new_org = Organism(organism_abbrev=name, component=component)
+        self.session.add(new_org)
+        self.session.commit()
+        return new_org
+
+    def get_organism(self, name: str) -> Organism:
+        """Retrieve an organism."""
+        stmt = (
+            select(Organism).options(joinedload(Organism.component)).where(Organism.organism_abbrev == name)
+        )
+
+        organism = self.session.scalars(stmt).first()
+
+        if not organism:
+            raise ValueError(f"No organism named {name}")
+        return organism
+
+    def remove_organism(self, name: str) -> None:
+        """Delete an organism."""
+        organism = self.get_organism(name)
+        self.session.delete(organism)
+        self.session.commit()
+
+    def list_organisms(self) -> List[Organism]:
+        """List all organisms."""
+
+        stmt = select(Organism)
+        organisms = list(self.session.scalars(stmt).unique().all())
+        return organisms
