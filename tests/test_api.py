@@ -24,6 +24,7 @@ from sqlalchemy.engine import Engine
 
 from ensembl.rnaseq.registry.api import RnaseqRegistry
 
+
 class Test_RNASeqRegistry:
     """Tests for the RNASeqRegistry module."""
 
@@ -55,6 +56,7 @@ class Test_RNASeqRegistry:
         assert insp.has_table("dataset")
         assert insp.has_table("sample")
         assert insp.has_table("organism")
+        assert insp.has_table("component")
 
     def test_add_get_component(self, engine: Engine) -> None:
         """Test adding a new component."""

@@ -143,6 +143,7 @@ def main() -> None:
     try:
         args.func(args)
     except AttributeError as err:
+        print(err)
         parser.print_help()
 
 

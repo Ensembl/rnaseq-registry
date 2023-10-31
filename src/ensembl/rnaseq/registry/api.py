@@ -139,21 +139,21 @@ class RnaseqRegistry:
                 # On the fly, create the new components
                 if component_name not in components:
                     components[component_name] = self.add_component(component_name)
-                
+
                 if organism_name in abbrevs:
                     continue
                 abbrevs.add(organism_name)
-            
+
                 new_orgs_data.append({"name": organism_name, "component": component_name})
-        
+
         # Now that we've created all the components, add the organisms attached to them
         orgs_to_add = []
         for new_org_data in new_orgs_data:
-                org_component = new_org_data["component"]
-                new_org = Organism(organism_abbrev=new_org_data["name"], component=components[org_component])
-                orgs_to_add.append(new_org)
+            org_component = new_org_data["component"]
+            new_org = Organism(organism_abbrev=new_org_data["name"], component=components[org_component])
+            orgs_to_add.append(new_org)
 
-                loaded_count += 1
+            loaded_count += 1
 
         self.session.add_all(orgs_to_add)
         self.session.commit()
