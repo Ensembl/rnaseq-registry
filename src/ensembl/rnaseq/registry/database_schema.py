@@ -52,7 +52,10 @@ class Sample(Base):
     name: Mapped[str] = mapped_column(String)
     SRA_accession: Mapped[str] = mapped_column(nullable=False)
     dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id"))
+     
+    # Relationships
     dataset: Mapped["Dataset"] = relationship(back_populates="samples", lazy="joined")
+    accessions: Mapped["Accession"] = relationship(back_populates="samples", lazy="joined")
 
     def __repr__(self) -> str:
         return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
@@ -83,3 +86,15 @@ class Component(Base):
 
     def __repr__(self) -> str:
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"
+
+class Accession(Base):
+    """Create a table for accession"""
+
+    __tablename__ = "accession"
+    sra_id: Mapped[str] = mapped_column(primary_key=True, unique=True)
+
+    # Relationships
+    samples: Mapped[List[Sample]] = relationship(back_populates="accessions", cascade="all", lazy="joined")
+
+    def __repr__(self) -> str:
+        return f"accession(sra_id={self.sra_id!r}, sample={self.sample.name!r})"
