@@ -34,8 +34,9 @@ class Dataset(Base):
     __tablename__ = "dataset"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String)
-    organism: Mapped[str] = mapped_column(ForeignKey("organism.id"))
+    name: Mapped[str] = mapped_column(String, unique=True)
+    organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
+    organism: Mapped["Organism"] = relationship(back_populates="datasets")
 
     # Relationships
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
@@ -50,12 +51,12 @@ class Sample(Base):
     __tablename__ = "sample"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    SRA_accession: Mapped[str] = mapped_column(nullable=False)
+    accessions: Mapped[str] = mapped_column(nullable=False)
     dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id"))
     dataset: Mapped["Dataset"] = relationship(back_populates="samples")
 
     def __repr__(self) -> str:
-        return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
+        return f"sample(accessions={self.accessions!r}, dataset={self.dataset!r})"
 
 
 class Organism(Base):
@@ -63,12 +64,13 @@ class Organism(Base):
 
     __tablename__ = "organism"
     id: Mapped[int] = mapped_column(primary_key=True)
-    organism_abbrev: Mapped[str] = mapped_column(String, unique=True)
+    abbrev: Mapped[str] = mapped_column(String, unique=True)
     component_id: Mapped[str] = mapped_column(ForeignKey("component.id"))
     component: Mapped["Component"] = relationship(back_populates="organisms")
+    datasets: Mapped["Dataset"] = relationship(back_populates="organism")
 
     def __repr__(self) -> str:
-        return f"organism(organism_abbrv={self.organism_abbrev!r}, component={self.component.name!r})"
+        return f"organism(abbrv={self.abbrev!r}, component={self.component.name!r})"
 
 
 class Component(Base):

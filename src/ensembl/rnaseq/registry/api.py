@@ -86,7 +86,7 @@ class RnaseqRegistry:
         except ValueError as err:
             raise ValueError("Cannot add organism for unknown component") from err
 
-        new_org = Organism(organism_abbrev=name, component=component)
+        new_org = Organism(abbrev=name, component=component)
         self.session.add(new_org)
         self.session.commit()
         return new_org
@@ -94,7 +94,7 @@ class RnaseqRegistry:
     def get_organism(self, name: str) -> Organism:
         """Retrieve an organism."""
         stmt = (
-            select(Organism).options(joinedload(Organism.component)).where(Organism.organism_abbrev == name)
+            select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
         )
 
         organism = self.session.scalars(stmt).first()
@@ -121,7 +121,7 @@ class RnaseqRegistry:
 
         # First, get the existing components and abbrevs
         components = {comp.name: comp for comp in self.list_components()}
-        abbrevs = {org.organism_abbrev for comp in components.values() for org in comp.organisms}
+        abbrevs = {org.abbrev for comp in components.values() for org in comp.organisms}
 
         # Next, get the list of new components and abbrevs, minus the known ones
         new_orgs_data = []
@@ -150,7 +150,7 @@ class RnaseqRegistry:
         orgs_to_add = []
         for new_org_data in new_orgs_data:
             org_component = new_org_data["component"]
-            new_org = Organism(organism_abbrev=new_org_data["name"], component=components[org_component])
+            new_org = Organism(abbrev=new_org_data["name"], component=components[org_component])
             orgs_to_add.append(new_org)
 
             loaded_count += 1
