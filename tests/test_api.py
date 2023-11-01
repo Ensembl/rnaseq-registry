@@ -15,7 +15,6 @@
 """
 Unit tests for the RNA-Seq registry API.
 """
-import inspect
 from pathlib import Path
 
 import pytest
@@ -25,7 +24,8 @@ from sqlalchemy.engine import Engine
 from ensembl.rnaseq.registry.api import RnaseqRegistry
 
 
-_CUR_DIR = Path(inspect.getfile(inspect.currentframe())).parent
+_CUR_DIR = Path(__file__).parent
+
 
 class Test_RNASeqRegistry:
     """Tests for the RNASeqRegistry module."""

@@ -14,7 +14,6 @@
 # limitations under the License.
 """RNA-Seq registry API module."""
 
-import inspect
 import json
 from typing import List
 from pathlib import Path
@@ -32,8 +31,8 @@ __all__ = [
     "RnaseqRegistry",
 ]
 
-cur_dir = Path(inspect.getfile(inspect.currentframe())).parent
-_RNASEQ_SCHEMA_PATH = Path(cur_dir, 'schemas/brc4_rnaseq_schema.json')
+cur_dir = Path(__file__).parent
+_RNASEQ_SCHEMA_PATH = Path(cur_dir, "schemas/brc4_rnaseq_schema.json")
 
 
 class RnaseqRegistry:
@@ -99,9 +98,7 @@ class RnaseqRegistry:
 
     def get_organism(self, name: str) -> Organism:
         """Retrieve an organism."""
-        stmt = (
-            select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
-        )
+        stmt = select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
 
         organism = self.session.scalars(stmt).first()
 
@@ -176,7 +173,7 @@ class RnaseqRegistry:
         with open(json_schema_file) as schema_fh:
             schema = json.load(schema_fh)
         validate(instance=json_data, schema=schema)
-        
+
         # Load the datasets
         abbrevs = {org.abbrev: org for org in self.list_organisms()}
         datasets: List = []
