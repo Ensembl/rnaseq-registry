@@ -14,20 +14,26 @@
 # limitations under the License.
 """RNA-Seq registry API module."""
 
+import inspect
+import json
 from typing import List
 from pathlib import Path
 from os import PathLike
 
+from jsonschema import validate
 from sqlalchemy import Engine
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from ensembl.rnaseq.registry.database_schema import Base, Component, Organism
+from ensembl.rnaseq.registry.database_schema import Base, Component, Organism, Dataset, Sample
 
 __all__ = [
     "RnaseqRegistry",
 ]
+
+cur_dir = Path(inspect.getfile(inspect.currentframe())).parent
+_RNASEQ_SCHEMA_PATH = Path(cur_dir, 'schemas/brc4_rnaseq_schema.json')
 
 
 class RnaseqRegistry:
@@ -156,6 +162,38 @@ class RnaseqRegistry:
             loaded_count += 1
 
         self.session.add_all(orgs_to_add)
+        self.session.commit()
+
+        return loaded_count
+
+    def load_datasets(self, input_file: PathLike) -> int:
+        """Import datasets from a json file."""
+
+        # Validate the json file
+        json_schema_file = _RNASEQ_SCHEMA_PATH
+        with open(input_file) as input_fh:
+            json_data = json.load(input_fh)
+        with open(json_schema_file) as schema_fh:
+            schema = json.load(schema_fh)
+        validate(instance=json_data, schema=schema)
+        
+        # Load the datasets
+        abbrevs = {org.abbrev: org for org in self.list_organisms()}
+        datasets: List = []
+        loaded_count = 0
+        for dataset in json_data:
+            organism_name = dataset["species"]
+            if not organism_name in abbrevs:
+                print(f"Organism '{organism_name}' is not in the registry.")
+                continue
+            samples = []
+            for run in dataset["runs"]:
+                accessions = ",".join(run["accessions"])
+                samples.append(Sample(name=run["name"], accessions=accessions))
+            datasets.append(Dataset(name=dataset["name"], organism=abbrevs[organism_name], samples=samples))
+            loaded_count += 1
+
+        self.session.add_all(datasets)
         self.session.commit()
 
         return loaded_count
