@@ -65,14 +65,14 @@ def change_component(args):
     if args.add:
         reg.add_component(args.add)
 
-    if args.get:
+    elif args.get:
         component = reg.get_component(args.get)
         print(component)
 
-    if args.remove:
+    elif args.remove:
         reg.remove_component(args.remove)
 
-    if args.list:
+    elif args.list:
         components = reg.list_components()
         print(components)
 
@@ -88,16 +88,20 @@ def change_organism(args):
             raise ValueError("Need a component")
         reg.add_organism(args.add, args.component)
 
-    if args.get:
+    elif args.get:
         organism = reg.get_organism(args.get)
         print(organism)
 
-    if args.remove:
+    elif args.remove:
         reg.remove_organism(args.remove)
 
-    if args.list:
+    elif args.list:
         organisms = reg.list_organisms()
         print(organisms)
+
+    elif args.load:
+        loaded_count = reg.load_organisms(args.load)
+        print(f"Loaded {loaded_count} organisms")
 
 
 def main() -> None:
@@ -129,12 +133,17 @@ def main() -> None:
     organism_parser.add_argument("--remove", help="Name of a organism to remove")
     organism_parser.add_argument("--get", help="Name of a organism to show")
     organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
+    organism_parser.add_argument(
+        "--load", help="Load organism abbrevs and components from a tab file (component\torganism_abbrev)"
+    )
 
     # Parse args and start the submenu action
     args = parser.parse_args()
+
     try:
         args.func(args)
-    except AttributeError:
+    except AttributeError as err:
+        print(err)
         parser.print_help()
 
 

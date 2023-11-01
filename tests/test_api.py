@@ -15,9 +15,11 @@
 """
 Unit tests for the RNA-Seq registry API.
 """
+import inspect
+from pathlib import Path
 
 import pytest
-from sqlalchemy import inspect, create_engine
+from sqlalchemy import inspect as sql_inspect, create_engine
 from sqlalchemy.engine import Engine
 
 from ensembl.rnaseq.registry.api import RnaseqRegistry
@@ -25,6 +27,12 @@ from ensembl.rnaseq.registry.api import RnaseqRegistry
 
 class Test_RNASeqRegistry:
     """Tests for the RNASeqRegistry module."""
+
+    @pytest.fixture
+    def orgs_file(self):
+        """Location of the organism file."""
+        cur_dir = Path(inspect.getfile(inspect.currentframe())).parent
+        return Path(cur_dir, "data", "orgs_file.tab")
 
     @pytest.fixture(scope="function")
     def engine(self) -> Engine:
@@ -44,10 +52,11 @@ class Test_RNASeqRegistry:
         reg.create_db()
 
         # Check if the tables are created in the test database file
-        insp = inspect(reg.engine)
+        insp = sql_inspect(reg.engine)
         assert insp.has_table("dataset")
         assert insp.has_table("sample")
         assert insp.has_table("organism")
+        assert insp.has_table("component")
 
     def test_add_get_component(self, engine: Engine) -> None:
         """Test adding a new component."""
@@ -81,3 +90,29 @@ class Test_RNASeqRegistry:
         reg.add_organism(org, comp)
         organism = reg.get_organism(org)
         assert organism
+
+    def test_load_organisms(self, engine: Engine, orgs_file: Path) -> None:
+        """Test adding organisms from a file."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+
+        reg.load_organisms(orgs_file)
+
+        species_a = reg.get_organism("speciesA")
+        assert species_a
+        test_component = reg.get_component("TestDB")
+        assert test_component
+
+        # Check counts
+        num_components = len(reg.list_components())
+        num_organisms = len(reg.list_organisms())
+        assert num_components == 2
+        assert num_organisms == 3
+
+        # Try to load again, should not fail, and not load anything new
+        reg.load_organisms(orgs_file)
+        num_components_after = len(reg.list_components())
+        num_organisms_after = len(reg.list_organisms())
+        assert num_components == num_components_after
+        assert num_organisms == num_organisms_after
