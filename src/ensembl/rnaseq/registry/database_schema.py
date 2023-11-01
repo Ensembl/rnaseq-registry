@@ -97,4 +97,4 @@ class Accession(Base):
     samples: Mapped[List[Sample]] = relationship(back_populates="accessions", cascade="all", lazy="joined")
 
     def __repr__(self) -> str:
-        return f"accession(sra_id={self.sra_id!r}, sample={self.sample.name!r})"
+        return f"accession(sra_id={self.sra_id!r}, sample={self.samples.name!r})"
