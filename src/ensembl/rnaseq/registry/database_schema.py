@@ -52,7 +52,7 @@ class Sample(Base):
     name: Mapped[str] = mapped_column(String)
     SRA_accession: Mapped[str] = mapped_column(ForeignKey("accession.sra_id"), nullable=False)
     dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id"))
-     
+    
     # Relationships
     dataset: Mapped["Dataset"] = relationship(back_populates="samples", lazy="joined")
     accessions: Mapped["Accession"] = relationship(back_populates="samples", lazy="joined")
@@ -99,3 +99,4 @@ class Accession(Base):
 
     def __repr__(self) -> str:
         return f"accession(sra_id={self.sra_id!r}, samples={self.samples!r})"
+    
