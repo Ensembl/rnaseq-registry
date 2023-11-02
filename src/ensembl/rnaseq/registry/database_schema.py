@@ -50,7 +50,7 @@ class Sample(Base):
     __tablename__ = "sample"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    SRA_accession: Mapped[str] = mapped_column(nullable=False)
+    SRA_accession: Mapped[str] = mapped_column(ForeignKey("accession.sra_id"), nullable=False)
     dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id"))
      
     # Relationships
@@ -91,10 +91,11 @@ class Accession(Base):
     """Create a table for accession"""
 
     __tablename__ = "accession"
-    sra_id: Mapped[str] = mapped_column(primary_key=True, unique=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sra_id: Mapped[str] = mapped_column(unique=True)
 
     # Relationships
     samples: Mapped[List[Sample]] = relationship(back_populates="accessions", cascade="all", lazy="joined")
 
     def __repr__(self) -> str:
-        return f"accession(sra_id={self.sra_id!r}, sample={self.samples.name!r})"
+        return f"accession(sra_id={self.sra_id!r}, samples={self.samples.name!r})"
