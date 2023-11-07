@@ -176,7 +176,7 @@ class RnaseqRegistry:
 
         # Load the datasets
         abbrevs = {org.abbrev: org for org in self.list_organisms()}
-        datasets: List = []
+        new_datasets_list: List = []
         loaded_count = 0
         for dataset in json_data:
             organism_name = dataset["species"]
@@ -187,10 +187,11 @@ class RnaseqRegistry:
             for run in dataset["runs"]:
                 accessions = ",".join(run["accessions"])
                 samples.append(Sample(name=run["name"], accessions=accessions))
-            datasets.append(Dataset(name=dataset["name"], organism=abbrevs[organism_name], samples=samples))
+            new_dataset = Dataset(name=dataset["name"], organism=abbrevs[organism_name], samples=samples)
+            new_datasets_list.append(new_dataset)
             loaded_count += 1
 
-        self.session.add_all(datasets)
+        self.session.add_all(new_datasets_list)
         self.session.commit()
 
         return loaded_count
