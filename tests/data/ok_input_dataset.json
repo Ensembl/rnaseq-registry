@@ -1,0 +1,28 @@
+[
+ {
+  "component": "TestDB",
+  "species": "speciesA",
+  "name": "dataset_A1",
+  "runs": [
+   {
+    "accessions": [
+     "SRR18473710",
+     "SRR18473711"
+    ],
+    "name": "female"
+   },
+   {
+    "accessions": [
+     "SRR18473712"
+    ],
+    "name": "male"
+   },
+   {
+    "accessions": [
+     "SRR18473707"
+    ],
+    "name": "nymph"
+   }
+  ]
+ }
+]

@@ -15,7 +15,6 @@
 """
 Unit tests for the RNA-Seq registry API.
 """
-import inspect
 from pathlib import Path
 
 import pytest
@@ -25,14 +24,21 @@ from sqlalchemy.engine import Engine
 from ensembl.rnaseq.registry.api import RnaseqRegistry
 
 
+_CUR_DIR = Path(__file__).parent
+
+
 class Test_RNASeqRegistry:
     """Tests for the RNASeqRegistry module."""
 
     @pytest.fixture
     def orgs_file(self):
         """Location of the organism file."""
-        cur_dir = Path(inspect.getfile(inspect.currentframe())).parent
-        return Path(cur_dir, "data", "orgs_file.tab")
+        return Path(_CUR_DIR, "data", "orgs_file.tab")
+
+    @pytest.fixture
+    def ok_dataset_file(self):
+        """Location of the ok dataset file."""
+        return Path(_CUR_DIR, "data", "ok_input_dataset.json")
 
     @pytest.fixture(scope="function")
     def engine(self) -> Engine:
@@ -116,3 +122,11 @@ class Test_RNASeqRegistry:
         num_organisms_after = len(reg.list_organisms())
         assert num_components == num_components_after
         assert num_organisms == num_organisms_after
+
+    def test_load_datasets(self, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
+        """Test adding datasets from a file."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(orgs_file)
+        reg.load_datasets(ok_dataset_file)

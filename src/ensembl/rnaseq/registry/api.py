@@ -14,20 +14,25 @@
 # limitations under the License.
 """RNA-Seq registry API module."""
 
+import json
 from typing import List
 from pathlib import Path
 from os import PathLike
 
+from jsonschema import validate
 from sqlalchemy import Engine
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 from sqlalchemy.orm import joinedload
 
-from ensembl.rnaseq.registry.database_schema import Base, Component, Organism
+from ensembl.rnaseq.registry.database_schema import Base, Component, Organism, Dataset, Sample
 
 __all__ = [
     "RnaseqRegistry",
 ]
+
+cur_dir = Path(__file__).parent
+_RNASEQ_SCHEMA_PATH = Path(cur_dir, "schemas/brc4_rnaseq_schema.json")
 
 
 class RnaseqRegistry:
@@ -86,16 +91,14 @@ class RnaseqRegistry:
         except ValueError as err:
             raise ValueError("Cannot add organism for unknown component") from err
 
-        new_org = Organism(organism_abbrev=name, component=component)
+        new_org = Organism(abbrev=name, component=component)
         self.session.add(new_org)
         self.session.commit()
         return new_org
 
     def get_organism(self, name: str) -> Organism:
         """Retrieve an organism."""
-        stmt = (
-            select(Organism).options(joinedload(Organism.component)).where(Organism.organism_abbrev == name)
-        )
+        stmt = select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
 
         organism = self.session.scalars(stmt).first()
 
@@ -121,7 +124,7 @@ class RnaseqRegistry:
 
         # First, get the existing components and abbrevs
         components = {comp.name: comp for comp in self.list_components()}
-        abbrevs = {org.organism_abbrev for comp in components.values() for org in comp.organisms}
+        abbrevs = {org.abbrev for comp in components.values() for org in comp.organisms}
 
         # Next, get the list of new components and abbrevs, minus the known ones
         new_orgs_data = []
@@ -150,12 +153,45 @@ class RnaseqRegistry:
         orgs_to_add = []
         for new_org_data in new_orgs_data:
             org_component = new_org_data["component"]
-            new_org = Organism(organism_abbrev=new_org_data["name"], component=components[org_component])
+            new_org = Organism(abbrev=new_org_data["name"], component=components[org_component])
             orgs_to_add.append(new_org)
 
             loaded_count += 1
 
         self.session.add_all(orgs_to_add)
+        self.session.commit()
+
+        return loaded_count
+
+    def load_datasets(self, input_file: PathLike) -> int:
+        """Import datasets from a json file."""
+
+        # Validate the json file
+        json_schema_file = _RNASEQ_SCHEMA_PATH
+        with open(input_file) as input_fh:
+            json_data = json.load(input_fh)
+        with open(json_schema_file) as schema_fh:
+            schema = json.load(schema_fh)
+        validate(instance=json_data, schema=schema)
+
+        # Load the datasets
+        abbrevs = {org.abbrev: org for org in self.list_organisms()}
+        new_datasets_list: List = []
+        loaded_count = 0
+        for dataset in json_data:
+            organism_name = dataset["species"]
+            if not organism_name in abbrevs:
+                print(f"Organism '{organism_name}' is not in the registry.")
+                continue
+            samples = []
+            for run in dataset["runs"]:
+                accessions = ",".join(run["accessions"])
+                samples.append(Sample(name=run["name"], accessions=accessions))
+            new_dataset = Dataset(name=dataset["name"], organism=abbrevs[organism_name], samples=samples)
+            new_datasets_list.append(new_dataset)
+            loaded_count += 1
+
+        self.session.add_all(new_datasets_list)
         self.session.commit()
 
         return loaded_count
