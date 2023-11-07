@@ -34,11 +34,12 @@ class Dataset(Base):
     __tablename__ = "dataset"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String)
-    organism: Mapped[str] = mapped_column(ForeignKey("organism.id"))
+    name: Mapped[str] = mapped_column(String, unique=True)
+    organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
+    organism: Mapped["Organism"] = relationship(back_populates="datasets")
 
     # Relationships
-    samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all", lazy="joined")
+    samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
 
     def __repr__(self) -> str:
         return f"dataset(name={self.name!r}, organism={self.organism!r})"
@@ -58,7 +59,7 @@ class Sample(Base):
     accessions: Mapped["Accession"] = relationship(back_populates="samples", lazy="joined")
 
     def __repr__(self) -> str:
-        return f"sample(SRA_accession={self.SRA_accession!r}, dataset={self.dataset!r})"
+        return f"sample(accessions={self.accessions!r}, dataset={self.dataset!r})"
 
 
 class Organism(Base):
@@ -66,12 +67,13 @@ class Organism(Base):
 
     __tablename__ = "organism"
     id: Mapped[int] = mapped_column(primary_key=True)
-    organism_abbrev: Mapped[str] = mapped_column(String, unique=True)
+    abbrev: Mapped[str] = mapped_column(String, unique=True)
     component_id: Mapped[str] = mapped_column(ForeignKey("component.id"))
-    component: Mapped["Component"] = relationship(back_populates="organisms", lazy="joined")
+    component: Mapped["Component"] = relationship(back_populates="organisms")
+    datasets: Mapped["Dataset"] = relationship(back_populates="organism")
 
     def __repr__(self) -> str:
-        return f"organism(organism_abbrv={self.organism_abbrev!r}, component={self.component.name!r})"
+        return f"organism(abbrv={self.abbrev!r}, component={self.component.name!r})"
 
 
 class Component(Base):
@@ -82,7 +84,7 @@ class Component(Base):
     name: Mapped[str] = mapped_column(String, unique=True)
 
     # Relationships
-    organisms: Mapped[List[Organism]] = relationship(back_populates="component", cascade="all", lazy="joined")
+    organisms: Mapped[List[Organism]] = relationship(back_populates="component", cascade="all")
 
     def __repr__(self) -> str:
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"

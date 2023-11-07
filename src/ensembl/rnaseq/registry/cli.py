@@ -104,6 +104,16 @@ def change_organism(args):
         print(f"Loaded {loaded_count} organisms")
 
 
+def change_dataset(args):
+    """Actions for the subcommand "dataset"."""
+    engine = get_engine(args.database)
+    reg = RnaseqRegistry(engine)
+
+    if args.load:
+        loaded_count = reg.load_datasets(args.load)
+        print(f"Loaded {loaded_count} datasets")
+
+
 def main() -> None:
     """Main script entry-point."""
     parser = argparse.ArgumentParser()
@@ -134,8 +144,14 @@ def main() -> None:
     organism_parser.add_argument("--get", help="Name of a organism to show")
     organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
     organism_parser.add_argument(
-        "--load", help="Load organisms and components from a tab file (component\torganism_abbrev)"
+        "--load", help="Load organism abbrevs and components from a tab file (component\torganism_abbrev)"
     )
+
+    # Dataset submenu
+    dataset_parser = subparsers.add_parser("dataset")
+    dataset_parser.set_defaults(func=change_dataset)
+    dataset_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
+    dataset_parser.add_argument("--load", help="Dataset data to load in json format")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
