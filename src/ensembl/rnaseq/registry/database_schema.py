@@ -51,15 +51,28 @@ class Sample(Base):
     __tablename__ = "sample"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
-    SRA_accession: Mapped[str] = mapped_column(ForeignKey("accession.sra_id"), nullable=False)
-    dataset_id: Mapped[str] = mapped_column(ForeignKey("dataset.id"))
+    dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
     
     # Relationships
-    dataset: Mapped["Dataset"] = relationship(back_populates="samples", lazy="joined")
-    accessions: Mapped["Accession"] = relationship(back_populates="samples", lazy="joined")
+    dataset: Mapped["Dataset"] = relationship(back_populates="samples")
+    accessions: Mapped[List["Accession"]] = relationship(back_populates="sample", cascade="all")
 
     def __repr__(self) -> str:
         return f"sample(accessions={self.accessions!r}, dataset={self.dataset!r})"
+
+class Accession(Base):
+    """Create a table for accession"""
+
+    __tablename__ = "accession"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sra_id: Mapped[str] = mapped_column(unique=True)
+    sample_id: Mapped[int] = mapped_column(ForeignKey("sample.id"))
+
+    # Relationships
+    sample: Mapped[Sample] = relationship(back_populates="accessions", cascade="all")
+
+    def __repr__(self) -> str:
+        return f"accession(sra_id={self.sra_id!r}, samples={self.sample!r})"
 
 
 class Organism(Base):
@@ -68,7 +81,7 @@ class Organism(Base):
     __tablename__ = "organism"
     id: Mapped[int] = mapped_column(primary_key=True)
     abbrev: Mapped[str] = mapped_column(String, unique=True)
-    component_id: Mapped[str] = mapped_column(ForeignKey("component.id"))
+    component_id: Mapped[int] = mapped_column(ForeignKey("component.id"))
     component: Mapped["Component"] = relationship(back_populates="organisms")
     datasets: Mapped["Dataset"] = relationship(back_populates="organism")
 
@@ -88,17 +101,3 @@ class Component(Base):
 
     def __repr__(self) -> str:
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"
-
-class Accession(Base):
-    """Create a table for accession"""
-
-    __tablename__ = "accession"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    sra_id: Mapped[str] = mapped_column(unique=True)
-
-    # Relationships
-    samples: Mapped[List[Sample]] = relationship(back_populates="accessions", cascade="all", lazy="joined")
-
-    def __repr__(self) -> str:
-        return f"accession(sra_id={self.sra_id!r}, samples={self.samples!r})"
-    
