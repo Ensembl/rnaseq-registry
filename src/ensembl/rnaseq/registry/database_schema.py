@@ -52,13 +52,14 @@ class Sample(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
-    
+
     # Relationships
     dataset: Mapped["Dataset"] = relationship(back_populates="samples")
     accessions: Mapped[List["Accession"]] = relationship(back_populates="sample", cascade="all")
 
     def __repr__(self) -> str:
         return f"sample(accessions={self.accessions!r}, dataset={self.dataset!r})"
+
 
 class Accession(Base):
     """Create a table for accession"""
