@@ -181,13 +181,15 @@ class RnaseqRegistry:
         for dataset in json_data:
             organism_name = dataset["species"]
             if not organism_name in abbrevs:
-                print(f"Organism '{organism_name}' is not in the registry.")
+                print(f"Organism '{organism_name}' is not in the registry")
                 continue
             samples = []
             for run in dataset["runs"]:
                 accessions = [Accession(sra_id=acc) for acc in run["accessions"]]
                 samples.append(Sample(name=run["name"], accessions=accessions))
-            new_dataset = Dataset(name=dataset["name"], organism=abbrevs[organism_name], samples=samples)
+            new_dataset = Dataset(
+                name=dataset["name"], organism_id=abbrevs[organism_name].id, samples=samples
+            )
             new_datasets_list.append(new_dataset)
             loaded_count += 1
 

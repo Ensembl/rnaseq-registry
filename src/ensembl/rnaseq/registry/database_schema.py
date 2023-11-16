@@ -16,7 +16,7 @@
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
 from typing import List
-from sqlalchemy import String, ForeignKey
+from sqlalchemy import String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column, relationship
 
@@ -34,9 +34,10 @@ class Dataset(Base):
     __tablename__ = "dataset"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
+    name: Mapped[str] = mapped_column(String)
     organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
     organism: Mapped["Organism"] = relationship(back_populates="datasets")
+    UniqueConstraint(name, organism_id)
 
     # Relationships
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
@@ -66,7 +67,7 @@ class Accession(Base):
 
     __tablename__ = "accession"
     id: Mapped[int] = mapped_column(primary_key=True)
-    sra_id: Mapped[str] = mapped_column(unique=True)
+    sra_id: Mapped[str] = mapped_column(String)
     sample_id: Mapped[int] = mapped_column(ForeignKey("sample.id"))
 
     # Relationships
