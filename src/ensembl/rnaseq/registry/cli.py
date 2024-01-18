@@ -112,6 +112,13 @@ def change_dataset(args):
     if args.load:
         loaded_count = reg.load_datasets(args.load)
         print(f"Loaded {loaded_count} datasets")
+    
+    elif args.get:
+        dataset = reg.get_dataset(args.get)
+        print(dataset)
+    
+    elif args.remove:
+        reg.remove_dataset(args.remove)
 
 
 def main() -> None:
@@ -152,6 +159,8 @@ def main() -> None:
     dataset_parser.set_defaults(func=change_dataset)
     dataset_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
     dataset_parser.add_argument("--load", help="Dataset data to load in json format")
+    dataset_parser.add_argument("--get", help="Name of a dataset to show")
+    
 
     # Parse args and start the submenu action
     args = parser.parse_args()

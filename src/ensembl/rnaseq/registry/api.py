@@ -197,3 +197,16 @@ class RnaseqRegistry:
         self.session.commit()
 
         return loaded_count
+
+    def get_dataset(self, name: str) -> Dataset:
+        """Retrieve an dataset."""
+        stmt = select(Dataset).options(joinedload(Dataset.samples)).where(Dataset.name == name)
+
+        dataset = self.session.scalars(stmt).first()
+
+        if not dataset:
+            raise ValueError(f"No dataset named {name}")
+        return dataset
+    
+    
+    
