@@ -208,5 +208,9 @@ class RnaseqRegistry:
             raise ValueError(f"No dataset named {name}")
         return dataset
     
-    
+    def remove_dataset(self, name: str) -> None:
+        """Delete an dataset."""
+        dataset = self.get_dataset(name)
+        self.session.delete(dataset)
+        self.session.commit()
     

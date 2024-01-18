@@ -160,7 +160,7 @@ def main() -> None:
     dataset_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
     dataset_parser.add_argument("--load", help="Dataset data to load in json format")
     dataset_parser.add_argument("--get", help="Name of a dataset to show")
-    
+    dataset_parser.add_argument("--remove", help="Name of a dataset to remove")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
