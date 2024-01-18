@@ -43,7 +43,7 @@ class Dataset(Base):
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
 
     def __repr__(self) -> str:
-        return f"dataset(name={self.name!r}, organism={self.organism!r})"
+        return f"dataset(name={self.name!r}, samples={self.samples!r})"
 
 
 class Sample(Base):
