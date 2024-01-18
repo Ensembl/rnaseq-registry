@@ -53,14 +53,23 @@ class RnaseqRegistry:
         Base.metadata.create_all(bind=self.engine)
 
     def add_component(self, name: str) -> Component:
-        """Insert a new component."""
+        """Insert a new component.
+
+        Args:
+            name: name of the component
+        """
         new_comp = Component(name=name)
         self.session.add(new_comp)
         self.session.commit()
         return new_comp
 
     def get_component(self, name: str, create: bool = False) -> Component:
-        """Retrieve a component."""
+        """Retrieve a component.
+
+        Args:
+        name : Name of the component.
+        create : Flag indicating whether to create the component if not found.
+        """
         stmt = select(Component).where(Component.name == name)
         component = self.session.scalars(stmt).first()
 
@@ -72,7 +81,11 @@ class RnaseqRegistry:
         return component
 
     def remove_component(self, name: str) -> None:
-        """Delete a component."""
+        """Delete a component.
+        
+        Args:
+        name : Name of the component to remove.
+        """
         component = self.get_component(name)
         self.session.delete(component)
         self.session.commit()
@@ -85,7 +98,12 @@ class RnaseqRegistry:
         return components
 
     def add_organism(self, name: str, component_name: str) -> Organism:
-        """Insert a new organism."""
+        """Insert a new organism.
+        
+        Args:
+        name : Name of the organism to add.
+        component_name : Name of the component of the organism
+        """
         try:
             component = self.get_component(component_name)
         except ValueError as err:
@@ -97,7 +115,11 @@ class RnaseqRegistry:
         return new_org
 
     def get_organism(self, name: str) -> Organism:
-        """Retrieve an organism."""
+        """Retrieve an organism.
+
+        Args:
+        name : Name of the organism.
+        """
         stmt = select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
 
         organism = self.session.scalars(stmt).first()
@@ -107,7 +129,11 @@ class RnaseqRegistry:
         return organism
 
     def remove_organism(self, name: str) -> None:
-        """Delete an organism."""
+        """Delete an organism.
+        
+        Args:
+        name : Name of the organism to remove.
+        """
         organism = self.get_organism(name)
         self.session.delete(organism)
         self.session.commit()
@@ -120,8 +146,11 @@ class RnaseqRegistry:
         return organisms
 
     def load_organisms(self, input_file: PathLike) -> int:
-        """Import organisms and their components from a file."""
+        """Import organisms and their components from a file.
 
+        Args:
+        input_file : Path to the input tab-delimited file.
+        """
         # First, get the existing components and abbrevs
         components = {comp.name: comp for comp in self.list_components()}
         abbrevs = {org.abbrev for comp in components.values() for org in comp.organisms}
@@ -164,8 +193,11 @@ class RnaseqRegistry:
         return loaded_count
 
     def load_datasets(self, input_file: PathLike) -> int:
-        """Import datasets from a json file."""
+        """Import datasets from a json file.
 
+        Args:
+        input_file : Path to the input json file.
+        """
         # Validate the json file
         json_schema_file = _RNASEQ_SCHEMA_PATH
         with open(input_file) as input_fh:
@@ -199,7 +231,11 @@ class RnaseqRegistry:
         return loaded_count
 
     def get_dataset(self, name: str) -> Dataset:
-        """Retrieve an dataset."""
+        """Retrieve an dataset.
+
+        Args:
+        name : Name of the dataset.
+        """
         stmt = select(Dataset).options(joinedload(Dataset.samples)).where(Dataset.name == name)
 
         dataset = self.session.scalars(stmt).first()
@@ -209,7 +245,11 @@ class RnaseqRegistry:
         return dataset
     
     def remove_dataset(self, name: str) -> None:
-        """Delete an dataset."""
+        """Delete an dataset.
+
+        Args:
+        name : Name of the dataset to remove.
+        """
         dataset = self.get_dataset(name)
         self.session.delete(dataset)
         self.session.commit()
