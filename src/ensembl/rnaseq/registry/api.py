@@ -82,7 +82,7 @@ class RnaseqRegistry:
 
     def remove_component(self, name: str) -> None:
         """Delete a component.
-        
+
         Args:
         name : Name of the component to remove.
         """
@@ -99,7 +99,7 @@ class RnaseqRegistry:
 
     def add_organism(self, name: str, component_name: str) -> Organism:
         """Insert a new organism.
-        
+
         Args:
         name : Name of the organism to add.
         component_name : Name of the component of the organism
@@ -130,7 +130,7 @@ class RnaseqRegistry:
 
     def remove_organism(self, name: str) -> None:
         """Delete an organism.
-        
+
         Args:
         name : Name of the organism to remove.
         """
@@ -241,7 +241,7 @@ class RnaseqRegistry:
         if not dataset:
             raise ValueError(f"No dataset named {name}")
         return dataset
-    
+
     def remove_dataset(self, name: str) -> None:
         """Delete a dataset.
 
@@ -251,4 +251,3 @@ class RnaseqRegistry:
         dataset = self.get_dataset(name)
         self.session.delete(dataset)
         self.session.commit()
-    

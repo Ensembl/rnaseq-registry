@@ -112,11 +112,11 @@ def change_dataset(args):
     if args.load:
         loaded_count = reg.load_datasets(args.load)
         print(f"Loaded {loaded_count} datasets")
-    
+
     elif args.get:
         dataset = reg.get_dataset(args.get)
         print(dataset)
-    
+
     elif args.remove:
         reg.remove_dataset(args.remove)
 
