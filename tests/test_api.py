@@ -65,6 +65,7 @@ class Test_RNASeqRegistry:
         assert insp.has_table("component")
         assert insp.has_table("accession")
 
+    @pytest.mark.dependency(name="add_get_feature")
     def test_add_get_component(self, engine: Engine) -> None:
         """Test adding a new component."""
 
