@@ -75,16 +75,18 @@ class Test_RNASeqRegistry:
         reg.get_component("TestDB")
         assert reg
 
+    @pytest.mark.dependency(depends=["add_get_feature"])
     def test_remove_component(self, engine: Engine) -> None:
         """Test removing a component."""
 
-        db_name = "TestDB"
+        comp_name = "TestDB"
         reg = RnaseqRegistry(engine)
         reg.create_db()
-        reg.add_component(db_name)
-        assert reg.get_component(db_name)
-        reg.remove_component(db_name)
+        reg.add_component(comp_name)
+        assert reg.get_component(comp_name)
+        reg.remove_component(comp_name)
 
+    @pytest.mark.dependency(depends=["add_get_feature"])
     def test_add_get_organism(self, engine: Engine) -> None:
         """Test adding a new organism."""
 
@@ -98,6 +100,7 @@ class Test_RNASeqRegistry:
         organism = reg.get_organism(org)
         assert organism
 
+    @pytest.mark.dependency(depends=["add_get_feature"])
     def test_load_organisms(self, engine: Engine, orgs_file: Path) -> None:
         """Test adding organisms from a file."""
 
@@ -124,6 +127,7 @@ class Test_RNASeqRegistry:
         assert num_components == num_components_after
         assert num_organisms == num_organisms_after
 
+    @pytest.mark.dependency(name="load_database")
     def test_load_datasets(self, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
         """Test adding datasets from a file."""
 
@@ -131,3 +135,30 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(orgs_file)
         reg.load_datasets(ok_dataset_file)
+
+    @pytest.mark.dependency(depends=["load_database"])
+    def test_get_dataset(self, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
+        """Test adding a new component."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+
+        reg.load_organisms(orgs_file)
+        reg.load_datasets(ok_dataset_file)
+        assert reg.get_dataset("dataset_A1")
+
+    @pytest.mark.dependency(depends=["load_database"])
+    def test_remove_dataset(self, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
+        """Test adding a new component."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        
+        reg.load_organisms(orgs_file)
+        reg.load_datasets(ok_dataset_file)
+        reg.get_dataset("dataset_A1")
+        reg.remove_dataset("dataset_A1")
+        with pytest.raises(ValueError):
+            reg.remove_dataset("dataset_A1")
+
+    
