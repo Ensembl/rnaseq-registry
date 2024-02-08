@@ -231,7 +231,7 @@ class RnaseqRegistry:
         return loaded_count
 
     def get_dataset(self, name: str) -> Dataset:
-        """Retrieve an dataset.
+        """Retrieve a dataset.
 
         Args:
         name : Name of the dataset.
@@ -243,7 +243,7 @@ class RnaseqRegistry:
         return dataset
     
     def remove_dataset(self, name: str) -> None:
-        """Delete an dataset.
+        """Delete a dataset.
 
         Args:
         name : Name of the dataset to remove.
