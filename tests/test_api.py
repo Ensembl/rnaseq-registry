@@ -54,14 +54,14 @@ class Test_RNASeqRegistry:
     )
 
     @pytest.fixture
-    def orgs_file(self):
+    def shared_orgs_file(self, data_dir: Path):
         """Location of the organism file."""
-        return Path(_CUR_DIR, "data", "orgs_file.tab")
+        return data_dir / "shared_orgs_file.tab"
 
     @pytest.fixture
-    def ok_dataset_file(self):
+    def shared_dataset_file(self, data_dir: Path):
         """Location of the ok dataset file."""
-        return Path(_CUR_DIR, "data", "ok_input_dataset.json")
+        return data_dir / "shared_input_dataset.json"
 
     @pytest.fixture(scope="function")
     def engine(self) -> Engine:
@@ -128,13 +128,13 @@ class Test_RNASeqRegistry:
     @pytest.mark.parametrize(*comp)
     @pytest.mark.parametrize(*org)
     @pytest.mark.dependency(depends=["add_get_feature"])
-    def test_load_organisms(self, engine: Engine, orgs_file: Path, comp: str, org: str) -> None:
+    def test_load_organisms(self, engine: Engine, shared_orgs_file: Path, comp: str, org: str) -> None:
         """Test adding organisms from a file."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
 
-        reg.load_organisms(orgs_file)
+        reg.load_organisms(shared_orgs_file)
 
         species_a = reg.get_organism(org)
         assert species_a
@@ -148,7 +148,7 @@ class Test_RNASeqRegistry:
         assert num_organisms == 3
 
         # Try to load again, should not fail, and not load anything new
-        reg.load_organisms(orgs_file)
+        reg.load_organisms(shared_orgs_file)
         num_components_after = len(reg.list_components())
         num_organisms_after = len(reg.list_organisms())
         assert num_components == num_components_after
@@ -156,44 +156,44 @@ class Test_RNASeqRegistry:
 
     @pytest.mark.dependency(name="load_dataset")
     @pytest.mark.parametrize(
-        "orgs_file, dataset_file, expectation",
+        "dataset_file, expectation",
         [
-            pytest.param("orgs_file.tab", "ok_input_dataset.json", does_not_raise(), id="OK dataset"),
-            pytest.param("orgs_file.tab", "datasets_same_name_ok.json", does_not_raise(), id="Load 2 datasets same name"),
-            pytest.param("orgs_file.tab", "datasets_same_name_same_org.json", raises(IntegrityError), id="2 datasets same name"),
+            pytest.param("shared_input_dataset.json", does_not_raise(), id="OK dataset"),
+            pytest.param("datasets_same_name_ok.json", does_not_raise(), id="Load 2 datasets same name"),
+            pytest.param("datasets_same_name_same_org.json", raises(IntegrityError), id="2 datasets same name"),
         ]
     )
-    def test_load_datasets(self, data_dir: Path, engine: Engine, orgs_file: Path, dataset_file: Path, expectation: ContextManager) -> None:
+    def test_load_datasets(self, data_dir: Path, engine: Engine, shared_orgs_file: Path, dataset_file: Path, expectation: ContextManager) -> None:
         """Test adding datasets from a file."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
-        reg.load_organisms(data_dir / orgs_file)
+        reg.load_organisms(shared_orgs_file)
         with expectation:
             reg.load_datasets(data_dir / dataset_file)
 
     @pytest.mark.parametrize(*dataset)
     @pytest.mark.dependency(depends=["load_dataset"])
-    def test_get_dataset(self, dataset: str, org: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
+    def test_get_dataset(self, dataset: str, org: str, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
 
-        reg.load_organisms(orgs_file)
-        reg.load_datasets(ok_dataset_file)
+        reg.load_organisms(shared_orgs_file)
+        reg.load_datasets(shared_dataset_file)
         assert reg.get_dataset(org, dataset)
 
     @pytest.mark.dependency(depends=["load_dataset"])
     def test_remove_dataset(
-        self, dataset: str, org: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path
+        self, dataset: str, org: str, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path
     ) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
-        reg.load_organisms(orgs_file)
-        reg.load_datasets(ok_dataset_file)
+        reg.load_organisms(shared_orgs_file)
+        reg.load_datasets(shared_dataset_file)
         assert reg.get_dataset(org, dataset)
         reg.remove_dataset(org, dataset)
         with pytest.raises(ValueError):
