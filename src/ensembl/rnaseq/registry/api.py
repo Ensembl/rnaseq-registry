@@ -237,12 +237,12 @@ class RnaseqRegistry:
         name : Name of the dataset.
         """
         stmt = (select(Dataset)
+            .join(Organism)
             .options(
                 joinedload(Dataset.samples),
-                joinedload(Dataset.organism)
             )
             .where(Dataset.name == dataset_name)
-            .where(Organism.name == organism_name)
+            .where(Organism.abbrev == organism_name)
         )
         dataset = self.session.scalars(stmt).first()
         if not dataset:
