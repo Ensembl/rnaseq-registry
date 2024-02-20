@@ -162,7 +162,7 @@ class Test_RNASeqRegistry:
     @pytest.mark.parametrize(*dataset)
     @pytest.mark.dependency(depends=["load_dataset"])
     def test_get_dataset(self, dataset: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
-        """Test adding a new component."""
+        """Test fetching a loaded dataset."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
@@ -173,10 +173,20 @@ class Test_RNASeqRegistry:
 
     @pytest.mark.parametrize(*dataset)
     @pytest.mark.dependency(depends=["load_dataset"])
+    def test_unsupported_get_dataset(self, dataset: str, engine: Engine) -> None:
+        """Test error when dataset is not found in 'get_dataset()'"""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        with pytest.raises(ValueError):
+            reg.get_dataset(dataset)
+
+    @pytest.mark.parametrize(*dataset)
+    @pytest.mark.dependency(name="remove_dataset",depends=["load_dataset"])
     def test_remove_dataset(
         self, dataset: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path
     ) -> None:
-        """Test adding a new component."""
+        """Test removing a dataset."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
@@ -184,5 +194,15 @@ class Test_RNASeqRegistry:
         reg.load_datasets(ok_dataset_file)
         assert reg.get_dataset(dataset)
         reg.remove_dataset(dataset)
+        with pytest.raises(ValueError):
+            reg.remove_dataset(dataset)
+
+    @pytest.mark.parametrize(*dataset)
+    @pytest.mark.dependency(depends=["remove_dataset"])
+    def test_unsupported_remove_dataset( self, dataset: str, engine: Engine) -> None:
+        """Test error when dataset is not found."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
         with pytest.raises(ValueError):
             reg.remove_dataset(dataset)
