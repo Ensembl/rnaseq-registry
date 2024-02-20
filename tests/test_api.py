@@ -50,7 +50,7 @@ class Test_RNASeqRegistry:
         test_engine = create_engine("sqlite:///:memory:")
         return test_engine
 
-# Tests start here
+    # Tests start here
     def test_init(self, engine: Engine) -> None:
         """Check the RNASeqRegistry object can be created."""
         reg = RnaseqRegistry(engine)
@@ -76,9 +76,11 @@ class Test_RNASeqRegistry:
         [
             pytest.param("TestDB", "TestDB", does_not_raise(), id="Add/Get existing component"),
             pytest.param("TestDB", "LOREM_IPSUM_DB", raises(ValueError), id="Get non-existing component"),
-        ]
+        ],
     )
-    def test_add_get_component(self, engine: Engine, added_component: str, get_component: str, expectation: ContextManager) -> None:
+    def test_add_get_component(
+        self, engine: Engine, added_component: str, get_component: str, expectation: ContextManager
+    ) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
@@ -95,9 +97,11 @@ class Test_RNASeqRegistry:
         [
             pytest.param("TestDB", "TestDB", does_not_raise(), id="Remove existing component"),
             pytest.param("TestDB", "LOREM_IPSUM_DB", raises(ValueError), id="Remove non-existing component"),
-        ]
+        ],
     )
-    def test_remove_component(self, engine: Engine, added_component: str, removed_component: str, expectation: ContextManager) -> None:
+    def test_remove_component(
+        self, engine: Engine, added_component: str, removed_component: str, expectation: ContextManager
+    ) -> None:
         """Test removing a component."""
 
         reg = RnaseqRegistry(engine)
@@ -111,10 +115,23 @@ class Test_RNASeqRegistry:
         "added_component, added_organism, get_organism, expectation",
         [
             pytest.param("TestDB", "SpeciesA", "SpeciesA", does_not_raise(), id="Add/get existing organism"),
-            pytest.param("TestDB", "SpeciesA", "LOREM_IPSUM_SPECIES", raises(ValueError), id="Get non-existing organism"),
-        ]
+            pytest.param(
+                "TestDB",
+                "SpeciesA",
+                "LOREM_IPSUM_SPECIES",
+                raises(ValueError),
+                id="Get non-existing organism",
+            ),
+        ],
     )
-    def test_add_get_organism(self, engine: Engine, added_component: str, added_organism: str, get_organism: str, expectation: ContextManager) -> None:
+    def test_add_get_organism(
+        self,
+        engine: Engine,
+        added_component: str,
+        added_organism: str,
+        get_organism: str,
+        expectation: ContextManager,
+    ) -> None:
         """Test adding a new organism."""
 
         reg = RnaseqRegistry(engine)
@@ -131,15 +148,24 @@ class Test_RNASeqRegistry:
         "organism_file, component, organism, expectation",
         [
             pytest.param("organisms_ok.tab", "TestDB", "SpeciesA", does_not_raise(), id="Import organisms"),
-        ]
+        ],
     )
-    def test_load_organisms(self, data_dir: Path, engine: Engine, organism_file: Path, component: str, organism: str, expectation: ContextManager) -> None:
+    def test_load_organisms(
+        self,
+        data_dir: Path,
+        engine: Engine,
+        organism_file: Path,
+        component: str,
+        organism: str,
+        expectation: ContextManager,
+    ) -> None:
         """Test adding organisms from a file."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
 
-        reg.load_organisms(data_dir / organism_file)
+        with expectation:
+            reg.load_organisms(data_dir / organism_file)
 
         test_component = reg.get_component(component)
         assert test_component
@@ -165,10 +191,19 @@ class Test_RNASeqRegistry:
         [
             pytest.param("shared_input_dataset.json", does_not_raise(), id="OK dataset"),
             pytest.param("datasets_same_name_ok.json", does_not_raise(), id="Load 2 datasets same name"),
-            pytest.param("datasets_same_name_same_org.json", raises(IntegrityError), id="2 datasets same name"),
-        ]
+            pytest.param(
+                "datasets_same_name_same_org.json", raises(IntegrityError), id="2 datasets same name"
+            ),
+        ],
     )
-    def test_load_datasets(self, data_dir: Path, engine: Engine, shared_orgs_file: Path, dataset_file: Path, expectation: ContextManager) -> None:
+    def test_load_datasets(
+        self,
+        data_dir: Path,
+        engine: Engine,
+        shared_orgs_file: Path,
+        dataset_file: Path,
+        expectation: ContextManager,
+    ) -> None:
         """Test adding datasets from a file."""
 
         reg = RnaseqRegistry(engine)
@@ -183,10 +218,20 @@ class Test_RNASeqRegistry:
         [
             pytest.param("speciesA", "dataset_A1", does_not_raise(), id="OK dataset"),
             pytest.param("speciesA", "datasets_Lorem_Ipsum", raises(ValueError), id="Dataset does not exist"),
-            pytest.param("species_FOOBAR", "datasets_Lorem_Ipsum", raises(ValueError), id="Organism does not exist"),
-        ]
+            pytest.param(
+                "species_FOOBAR", "datasets_Lorem_Ipsum", raises(ValueError), id="Organism does not exist"
+            ),
+        ],
     )
-    def test_get_dataset(self, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path, organism_name: str, dataset_name: str, expectation: ContextManager) -> None:
+    def test_get_dataset(
+        self,
+        engine: Engine,
+        shared_orgs_file: Path,
+        shared_dataset_file: Path,
+        organism_name: str,
+        dataset_name: str,
+        expectation: ContextManager,
+    ) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
@@ -203,11 +248,19 @@ class Test_RNASeqRegistry:
         [
             pytest.param("speciesA", "dataset_A1", does_not_raise(), id="OK dataset"),
             pytest.param("speciesA", "datasets_Lorem_Ipsum", raises(ValueError), id="Dataset does not exist"),
-            pytest.param("species_FOOBAR", "datasets_Lorem_Ipsum", raises(ValueError), id="Organism does not exist"),
-        ]
+            pytest.param(
+                "species_FOOBAR", "datasets_Lorem_Ipsum", raises(ValueError), id="Organism does not exist"
+            ),
+        ],
     )
     def test_remove_dataset(
-        self, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path, organism_name: str, dataset_name: str, expectation: ContextManager
+        self,
+        engine: Engine,
+        shared_orgs_file: Path,
+        shared_dataset_file: Path,
+        organism_name: str,
+        dataset_name: str,
+        expectation: ContextManager,
     ) -> None:
         """Test adding a new component."""
 
