@@ -34,25 +34,6 @@ _CUR_DIR = Path(__file__).parent
 class Test_RNASeqRegistry:
     """Tests for the RNASeqRegistry module."""
 
-    comp = (
-        "comp",
-        [
-            ("TestDB"),
-        ],
-    )
-    org = (
-        "org",
-        [
-            ("speciesA"),
-        ],
-    )
-    dataset = (
-        "dataset",
-        [
-            ("dataset_A1"),
-        ],
-    )
-
     @pytest.fixture
     def shared_orgs_file(self, data_dir: Path):
         """Location of the organism file."""
@@ -69,6 +50,7 @@ class Test_RNASeqRegistry:
         test_engine = create_engine("sqlite:///:memory:")
         return test_engine
 
+# Tests start here
     def test_init(self, engine: Engine) -> None:
         """Check the RNASeqRegistry object can be created."""
         reg = RnaseqRegistry(engine)
@@ -82,64 +64,87 @@ class Test_RNASeqRegistry:
 
         # Check if the tables are created in the test database file
         insp = sql_inspect(reg.engine)
+        assert insp.has_table("component")
+        assert insp.has_table("organism")
         assert insp.has_table("dataset")
         assert insp.has_table("sample")
-        assert insp.has_table("organism")
-        assert insp.has_table("component")
         assert insp.has_table("accession")
 
-    @pytest.mark.parametrize(*comp)
     @pytest.mark.dependency(name="add_get_feature")
-    def test_add_get_component(self, comp: str, engine: Engine) -> None:
+    @pytest.mark.parametrize(
+        "added_component, get_component, expectation",
+        [
+            pytest.param("TestDB", "TestDB", does_not_raise(), id="Add/Get existing component"),
+            pytest.param("TestDB", "LOREM_IPSUM_DB", raises(ValueError), id="Get non-existing component"),
+        ]
+    )
+    def test_add_get_component(self, engine: Engine, added_component: str, get_component: str, expectation: ContextManager) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
 
-        reg.add_component(comp)
-        reg.get_component(comp)
-        assert reg
+        with expectation:
+            reg.add_component(added_component)
+            reg.get_component(get_component)
+            assert reg
 
-    @pytest.mark.parametrize(*comp)
     @pytest.mark.dependency(depends=["add_get_feature"])
-    def test_remove_component(self, comp: str, engine: Engine) -> None:
+    @pytest.mark.parametrize(
+        "added_component, removed_component, expectation",
+        [
+            pytest.param("TestDB", "TestDB", does_not_raise(), id="Remove existing component"),
+            pytest.param("TestDB", "LOREM_IPSUM_DB", raises(ValueError), id="Remove non-existing component"),
+        ]
+    )
+    def test_remove_component(self, engine: Engine, added_component: str, removed_component: str, expectation: ContextManager) -> None:
         """Test removing a component."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
-        reg.add_component(comp)
-        assert reg.get_component(comp)
-        reg.remove_component(comp)
+        reg.add_component(added_component)
+        with expectation:
+            reg.remove_component(removed_component)
 
-    @pytest.mark.parametrize(*comp)
-    @pytest.mark.parametrize(*org)
     @pytest.mark.dependency(depends=["add_get_feature"])
-    def test_add_get_organism(self, comp: str, engine: Engine, org: str) -> None:
+    @pytest.mark.parametrize(
+        "added_component, added_organism, get_organism, expectation",
+        [
+            pytest.param("TestDB", "SpeciesA", "SpeciesA", does_not_raise(), id="Add/get existing organism"),
+            pytest.param("TestDB", "SpeciesA", "LOREM_IPSUM_SPECIES", raises(ValueError), id="Get non-existing organism"),
+        ]
+    )
+    def test_add_get_organism(self, engine: Engine, added_component: str, added_organism: str, get_organism: str, expectation: ContextManager) -> None:
         """Test adding a new organism."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
 
-        reg.add_component(comp)
-        reg.add_organism(org, comp)
-        organism = reg.get_organism(org)
-        assert organism
+        reg.add_component(added_component)
+        with expectation:
+            reg.add_organism(added_organism, added_component)
+            organism = reg.get_organism(get_organism)
+            assert organism
 
-    @pytest.mark.parametrize(*comp)
-    @pytest.mark.parametrize(*org)
     @pytest.mark.dependency(depends=["add_get_feature"])
-    def test_load_organisms(self, engine: Engine, shared_orgs_file: Path, comp: str, org: str) -> None:
+    @pytest.mark.parametrize(
+        "organism_file, component, organism, expectation",
+        [
+            pytest.param("organisms_ok.tab", "TestDB", "SpeciesA", does_not_raise(), id="Import organisms"),
+        ]
+    )
+    def test_load_organisms(self, data_dir: Path, engine: Engine, organism_file: Path, component: str, organism: str, expectation: ContextManager) -> None:
         """Test adding organisms from a file."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
 
-        reg.load_organisms(shared_orgs_file)
+        reg.load_organisms(data_dir / organism_file)
 
-        species_a = reg.get_organism(org)
-        assert species_a
-        test_component = reg.get_component(comp)
+        test_component = reg.get_component(component)
         assert test_component
+        species_a = reg.get_organism(organism)
+        assert species_a
 
         # Check counts
         num_components = len(reg.list_components())
@@ -148,7 +153,7 @@ class Test_RNASeqRegistry:
         assert num_organisms == 3
 
         # Try to load again, should not fail, and not load anything new
-        reg.load_organisms(shared_orgs_file)
+        reg.load_organisms(data_dir / organism_file)
         num_components_after = len(reg.list_components())
         num_organisms_after = len(reg.list_organisms())
         assert num_components == num_components_after

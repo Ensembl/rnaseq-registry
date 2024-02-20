@@ -120,7 +120,12 @@ class RnaseqRegistry:
         Args:
         name : Name of the organism.
         """
-        stmt = select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
+        stmt = (select(Organism)
+                .options(
+                    joinedload(Organism.component)
+                )
+                .where(Organism.abbrev == name)
+        )
 
         organism = self.session.scalars(stmt).first()
 

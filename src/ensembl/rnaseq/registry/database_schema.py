@@ -53,7 +53,7 @@ class Organism(Base):
     datasets: Mapped["Dataset"] = relationship(back_populates="organism")
 
     def __repr__(self) -> str:
-        return f"organism(abbrv={self.abbrev!r}, component={self.component.name!r})"
+        return f"organism(abbrev={self.abbrev!r}, component={self.component.name!r})"
 
 
 class Dataset(Base):
