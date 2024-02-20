@@ -170,11 +170,18 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(shared_orgs_file)
         with expectation:
-            reg.load_datasets(data_dir / dataset_file)
+            assert reg.load_datasets(data_dir / dataset_file)
 
-    @pytest.mark.parametrize(*dataset)
-    @pytest.mark.dependency(depends=["load_dataset"])
-    def test_get_dataset(self, dataset: str, org: str, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path) -> None:
+    @pytest.mark.dependency(name="get_dataset", depends=["load_dataset"])
+    @pytest.mark.parametrize(
+        "organism_name, dataset_name, expectation",
+        [
+            pytest.param("speciesA", "dataset_A1", does_not_raise(), id="OK dataset"),
+            pytest.param("speciesA", "datasets_Lorem_Ipsum", raises(ValueError), id="Dataset does not exist"),
+            pytest.param("species_FOOBAR", "datasets_Lorem_Ipsum", raises(ValueError), id="Organism does not exist"),
+        ]
+    )
+    def test_get_dataset(self, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path, organism_name: str, dataset_name: str, expectation: ContextManager) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
@@ -182,11 +189,20 @@ class Test_RNASeqRegistry:
 
         reg.load_organisms(shared_orgs_file)
         reg.load_datasets(shared_dataset_file)
-        assert reg.get_dataset(org, dataset)
+        with expectation:
+            assert reg.get_dataset(organism_name, dataset_name)
 
-    @pytest.mark.dependency(depends=["load_dataset"])
+    @pytest.mark.dependency(name="remove_dataset", depends=["load_dataset", "get_dataset"])
+    @pytest.mark.parametrize(
+        "organism_name, dataset_name, expectation",
+        [
+            pytest.param("speciesA", "dataset_A1", does_not_raise(), id="OK dataset"),
+            pytest.param("speciesA", "datasets_Lorem_Ipsum", raises(ValueError), id="Dataset does not exist"),
+            pytest.param("species_FOOBAR", "datasets_Lorem_Ipsum", raises(ValueError), id="Organism does not exist"),
+        ]
+    )
     def test_remove_dataset(
-        self, dataset: str, org: str, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path
+        self, engine: Engine, shared_orgs_file: Path, shared_dataset_file: Path, organism_name: str, dataset_name: str, expectation: ContextManager
     ) -> None:
         """Test adding a new component."""
 
@@ -194,7 +210,5 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(shared_orgs_file)
         reg.load_datasets(shared_dataset_file)
-        assert reg.get_dataset(org, dataset)
-        reg.remove_dataset(org, dataset)
-        with pytest.raises(ValueError):
-            reg.remove_dataset(org, dataset)
+        with expectation:
+            reg.remove_dataset(organism_name, dataset_name)
