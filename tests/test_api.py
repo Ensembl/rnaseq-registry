@@ -15,11 +15,15 @@
 """
 Unit tests for the RNA-Seq registry API.
 """
+from contextlib import nullcontext as does_not_raise
 from pathlib import Path
+from typing import ContextManager
 
 import pytest
+from pytest import raises
 from sqlalchemy import inspect as sql_inspect, create_engine
 from sqlalchemy.engine import Engine
+from sqlalchemy.exc import IntegrityError
 
 from ensembl.rnaseq.registry.api import RnaseqRegistry
 
@@ -151,17 +155,26 @@ class Test_RNASeqRegistry:
         assert num_organisms == num_organisms_after
 
     @pytest.mark.dependency(name="load_dataset")
-    def test_load_datasets(self, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
+    @pytest.mark.parametrize(
+        "orgs_file, dataset_file, expectation",
+        [
+            pytest.param("orgs_file.tab", "ok_input_dataset.json", does_not_raise(), id="OK dataset"),
+            pytest.param("orgs_file.tab", "datasets_same_name_ok.json", does_not_raise(), id="Load 2 datasets same name"),
+            pytest.param("orgs_file.tab", "datasets_same_name_same_org.json", raises(IntegrityError), id="2 datasets same name"),
+        ]
+    )
+    def test_load_datasets(self, data_dir: Path, engine: Engine, orgs_file: Path, dataset_file: Path, expectation: ContextManager) -> None:
         """Test adding datasets from a file."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
-        reg.load_organisms(orgs_file)
-        reg.load_datasets(ok_dataset_file)
+        reg.load_organisms(data_dir / orgs_file)
+        with expectation:
+            reg.load_datasets(data_dir / dataset_file)
 
     @pytest.mark.parametrize(*dataset)
     @pytest.mark.dependency(depends=["load_dataset"])
-    def test_get_dataset(self, dataset: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
+    def test_get_dataset(self, dataset: str, org: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path) -> None:
         """Test adding a new component."""
 
         reg = RnaseqRegistry(engine)
@@ -169,12 +182,11 @@ class Test_RNASeqRegistry:
 
         reg.load_organisms(orgs_file)
         reg.load_datasets(ok_dataset_file)
-        assert reg.get_dataset(dataset)
+        assert reg.get_dataset(org, dataset)
 
-    @pytest.mark.parametrize(*dataset)
     @pytest.mark.dependency(depends=["load_dataset"])
     def test_remove_dataset(
-        self, dataset: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path
+        self, dataset: str, org: str, engine: Engine, orgs_file: Path, ok_dataset_file: Path
     ) -> None:
         """Test adding a new component."""
 
@@ -182,7 +194,7 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(orgs_file)
         reg.load_datasets(ok_dataset_file)
-        assert reg.get_dataset(dataset)
-        reg.remove_dataset(dataset)
+        assert reg.get_dataset(org, dataset)
+        reg.remove_dataset(org, dataset)
         with pytest.raises(ValueError):
-            reg.remove_dataset(dataset)
+            reg.remove_dataset(org, dataset)
