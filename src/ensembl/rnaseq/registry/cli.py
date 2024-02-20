@@ -114,11 +114,11 @@ def change_dataset(args):
         print(f"Loaded {loaded_count} datasets")
 
     elif args.get:
-        dataset = reg.get_dataset(args.get)
+        dataset = reg.get_dataset(args.organism, args.get)
         print(dataset)
 
     elif args.remove:
-        reg.remove_dataset(args.remove)
+        reg.remove_dataset(args.organism, args.remove)
 
 
 def main() -> None:
@@ -141,7 +141,7 @@ def main() -> None:
     component_parser.add_argument("--get", help="Name of a component to show")
     component_parser.add_argument("--list", action="store_true", help="Print the list of components")
 
-    # Component submenu
+    # Organism submenu
     organism_parser = subparsers.add_parser("organism")
     organism_parser.set_defaults(func=change_organism)
     organism_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
@@ -161,6 +161,7 @@ def main() -> None:
     dataset_parser.add_argument("--load", help="Dataset data to load in json format")
     dataset_parser.add_argument("--get", help="Name of a dataset to show")
     dataset_parser.add_argument("--remove", help="Name of a dataset to remove")
+    dataset_parser.add_argument("--organism", help="Name of a organism for this dataset")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
