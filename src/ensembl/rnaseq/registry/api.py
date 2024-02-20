@@ -20,10 +20,8 @@ from pathlib import Path
 from os import PathLike
 
 from jsonschema import validate
-from sqlalchemy import Engine
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session, joinedload
 
 from ensembl.rnaseq.registry.database_schema import Base, Component, Organism, Dataset, Sample, Accession
 
@@ -94,7 +92,7 @@ class RnaseqRegistry:
         """List all components."""
 
         stmt = select(Component)
-        components = list(self.session.scalars(stmt).unique().all())
+        components = list(self.session.scalars(stmt).all())
         return components
 
     def add_organism(self, name: str, component_name: str) -> Organism:
@@ -142,7 +140,7 @@ class RnaseqRegistry:
         """List all organisms."""
 
         stmt = select(Organism)
-        organisms = list(self.session.scalars(stmt).unique().all())
+        organisms = list(self.session.scalars(stmt).all())
         return organisms
 
     def load_organisms(self, input_file: PathLike) -> int:
