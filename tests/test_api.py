@@ -277,6 +277,7 @@ class Test_RNASeqRegistry:
     @pytest.mark.parametrize(
         "datasets_file, component, organism, dataset, number_expected, expectation",
         [
+            pytest.param("datasets_several.json", None, None, None, 3, does_not_raise(), id="Get all datasets"),
             pytest.param("datasets_several.json", None, "speciesA", "dataset_A1", 1, does_not_raise(), id="Get 1 exact dataset"),
             pytest.param("datasets_several.json", None, "speciesA", None, 2, does_not_raise(), id="Datasets for 1 species"),
             pytest.param("datasets_several.json", "TestDB", None, None, 3, does_not_raise(), id="Datasets for 1 component"),
