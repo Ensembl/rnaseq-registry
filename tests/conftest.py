@@ -16,7 +16,9 @@
 
 """
 
+from difflib import unified_diff
 from pathlib import Path
+from typing import Any, Callable
 
 import pytest
 from pytest import FixtureRequest
@@ -31,3 +33,19 @@ def local_data_dir(request: FixtureRequest) -> Path:
 
     """
     return Path(request.module.__file__).with_suffix("")
+
+
+@pytest.fixture(name="assert_files")
+def assert_files() -> Callable[[Path, Path], None]:
+    """Provide a function that asserts two files and show a diff if they differ."""
+
+    def _assert_files(result_path: Path, expected_path: Path) -> None:
+        with open(result_path, "r") as result_fh:
+            results = result_fh.readlines()
+        with open(expected_path, "r") as expected_fh:
+            expected = expected_fh.readlines()
+        files_diff = list(unified_diff(results, expected, fromfile="Test-made file", tofile="Expected file"))
+        assert_message = f"Test-made and expected files differ\n{' '.join(files_diff)}"
+        assert len(files_diff) == 0, assert_message
+
+    return _assert_files

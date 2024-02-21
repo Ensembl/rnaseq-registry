@@ -17,7 +17,7 @@ Unit tests for the RNA-Seq registry API.
 """
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from typing import ContextManager, Optional
+from typing import Callable, ContextManager, Optional
 
 import pytest
 from pytest import raises
@@ -242,7 +242,7 @@ class Test_RNASeqRegistry:
         with expectation:
             assert reg.get_dataset(organism_name, dataset_name)
 
-    @pytest.mark.dependency(name="get_filtered_dataset", depends=["get_dataset"])
+    @pytest.mark.dependency(name="get_filtered_datasets", depends=["get_dataset"])
     @pytest.mark.parametrize(
         "datasets_file, component, organism, dataset, number_expected, expectation",
         [
@@ -253,7 +253,7 @@ class Test_RNASeqRegistry:
             pytest.param("datasets_several.json", "TestDB", "LOREM", None, 0, does_not_raise(), id="Unknown species"),
         ],
     )
-    def test_get_filterd_dataset(
+    def test_get_filtered_datasets(
         self,
         data_dir: Path,
         engine: Engine,
@@ -305,3 +305,38 @@ class Test_RNASeqRegistry:
         reg.load_datasets(shared_dataset_file)
         with expectation:
             reg.remove_dataset(organism_name, dataset_name)
+
+
+    @pytest.mark.dependency(name="dump_datasets", depends=["get_filtered_datasets"])
+    @pytest.mark.parametrize(
+        "datasets_file, expected_dumped_file, expectation",
+        [
+            pytest.param("datasets_several.json", "datasets_several_sorted.json", does_not_raise(), id="Dump same file"),
+        ],
+    )
+    def test_dump_datasets(
+        self,
+        assert_files: Callable,
+        data_dir: Path,
+        tmp_path: Path,
+        engine: Engine,
+        shared_orgs_file: Path,
+        datasets_file: Path,
+        expected_dumped_file: Path,
+        expectation: ContextManager,
+    ) -> None:
+        """Test dumping a dataset file."""
+        component = None
+        organism = None
+        dataset = None
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(shared_orgs_file)
+
+        reg.load_datasets(data_dir / datasets_file)
+        dumped_path = tmp_path / "output_dump.json"
+        with expectation:
+            datasets = reg.get_filtered_datasets(component=component, organism=organism, dataset_name=dataset)
+            reg.dump_datasets(dumped_path, datasets)
+            assert_files(dumped_path, data_dir / expected_dumped_file)

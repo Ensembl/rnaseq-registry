@@ -15,7 +15,7 @@
 
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
-from typing import List
+from typing import Any, Dict, List
 from sqlalchemy import String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column, relationship
@@ -72,6 +72,21 @@ class Dataset(Base):
 
     def __repr__(self) -> str:
         return f"dataset(from={self.organism}, name={self.name!r}, samples={self.samples!r})"
+    
+    def to_json_struct(self) -> Dict[str, Any]:
+        dataset_struct = {
+            "component": self.organism.component.name,
+            "species": self.organism.abbrev,
+            "name": self.name,
+            "runs": [],
+        }
+        for sample in self.samples:
+            accessions = [acc.sra_id for acc in sample.accessions]
+            dataset_struct["runs"].append({
+                "name": sample.name,
+                "accessions": accessions
+            })
+        return dataset_struct
 
 
 class Sample(Base):
