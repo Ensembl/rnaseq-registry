@@ -15,7 +15,7 @@
 """RNA-Seq registry API module."""
 
 import json
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 from os import PathLike
 
@@ -91,7 +91,7 @@ class RnaseqRegistry:
     def list_components(self) -> List[Component]:
         """List all components."""
 
-        stmt = select(Component)
+        stmt = select(Component).order_by(Component.name)
         components = list(self.session.scalars(stmt).all())
         return components
 
@@ -136,10 +136,16 @@ class RnaseqRegistry:
         self.session.delete(organism)
         self.session.commit()
 
-    def list_organisms(self) -> List[Organism]:
-        """List all organisms."""
+    def list_organisms(self, component: Optional[str] = None) -> List[Organism]:
+        """List all organisms.
+        
+        Args:
+        component: filter by component.
+        """
 
-        stmt = select(Organism)
+        stmt = select(Organism).join(Component).order_by(Component.name, Organism.abbrev)
+        if component:
+            stmt = stmt.where(Component.name == component)
         organisms = list(self.session.scalars(stmt).all())
         return organisms
 
@@ -248,17 +254,13 @@ class RnaseqRegistry:
             raise ValueError(f"No dataset named {dataset_name} for {organism_name}")
         return dataset
 
-    def remove_dataset(self, organism_name: str, dataset_name: str) -> None:
+    def remove_dataset(self, dataset: Dataset) -> None:
         """Delete a dataset.
-
-        Args:
-        name : Name of the dataset to remove.
         """
-        dataset = self.get_dataset(organism_name, dataset_name)
         self.session.delete(dataset)
         self.session.commit()
 
-    def get_filtered_datasets(
+    def list_datasets(
         self, component: str = "", organism: str = "", dataset_name: str = ""
     ) -> List[Dataset]:
         """Get all datasets with the provided filters."""

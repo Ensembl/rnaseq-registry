@@ -185,7 +185,7 @@ class Test_RNASeqRegistry:
         assert num_components == num_components_after
         assert num_organisms == num_organisms_after
 
-    @pytest.mark.dependency(name="load_dataset")
+    @pytest.mark.dependency(name="load_datasets")
     @pytest.mark.parametrize(
         "dataset_file, expectation",
         [
@@ -212,7 +212,7 @@ class Test_RNASeqRegistry:
         with expectation:
             assert reg.load_datasets(data_dir / dataset_file)
 
-    @pytest.mark.dependency(name="get_dataset", depends=["load_dataset"])
+    @pytest.mark.dependency(name="get_dataset", depends=["load_datasets"])
     @pytest.mark.parametrize(
         "organism_name, dataset_name, expectation",
         [
@@ -242,42 +242,8 @@ class Test_RNASeqRegistry:
         with expectation:
             assert reg.get_dataset(organism_name, dataset_name)
 
-    @pytest.mark.dependency(name="get_filtered_datasets", depends=["get_dataset"])
-    @pytest.mark.parametrize(
-        "datasets_file, component, organism, dataset, number_expected, expectation",
-        [
-            pytest.param("datasets_several.json", None, "speciesA", "dataset_A1", 1, does_not_raise(), id="Get 1 exact dataset"),
-            pytest.param("datasets_several.json", None, "speciesA", None, 2, does_not_raise(), id="Datasets for 1 species"),
-            pytest.param("datasets_several.json", "TestDB", None, None, 3, does_not_raise(), id="Datasets for 1 component"),
-            pytest.param("datasets_several.json", "NoDB", None, None, 0, does_not_raise(), id="Unknown component"),
-            pytest.param("datasets_several.json", "TestDB", "LOREM", None, 0, does_not_raise(), id="Unknown species"),
-        ],
-    )
-    def test_get_filtered_datasets(
-        self,
-        data_dir: Path,
-        engine: Engine,
-        shared_orgs_file: Path,
-        datasets_file: Path,
-        component: Optional[str],
-        organism: Optional[str],
-        dataset: Optional[str],
-        number_expected: int,
-        expectation: ContextManager,
-    ) -> None:
-        """Test getting a filtered list of datasets."""
 
-        reg = RnaseqRegistry(engine)
-        reg.create_db()
-        reg.load_organisms(shared_orgs_file)
-
-        reg.load_datasets(data_dir  / datasets_file)
-        with expectation:
-            datasets = reg.get_filtered_datasets(component=component, organism=organism, dataset_name=dataset)
-            assert len(datasets) == number_expected
-
-
-    @pytest.mark.dependency(name="remove_dataset", depends=["load_dataset", "get_dataset"])
+    @pytest.mark.dependency(name="remove_dataset", depends=["load_datasets", "get_dataset"])
     @pytest.mark.parametrize(
         "organism_name, dataset_name, expectation",
         [
@@ -304,10 +270,45 @@ class Test_RNASeqRegistry:
         reg.load_organisms(shared_orgs_file)
         reg.load_datasets(shared_dataset_file)
         with expectation:
-            reg.remove_dataset(organism_name, dataset_name)
+            dataset = reg.get_dataset(organism_name, dataset_name)
+            reg.remove_dataset(dataset)
+
+    @pytest.mark.dependency(name="list_datasets", depends=["load_datasets"])
+    @pytest.mark.parametrize(
+        "datasets_file, component, organism, dataset, number_expected, expectation",
+        [
+            pytest.param("datasets_several.json", None, "speciesA", "dataset_A1", 1, does_not_raise(), id="Get 1 exact dataset"),
+            pytest.param("datasets_several.json", None, "speciesA", None, 2, does_not_raise(), id="Datasets for 1 species"),
+            pytest.param("datasets_several.json", "TestDB", None, None, 3, does_not_raise(), id="Datasets for 1 component"),
+            pytest.param("datasets_several.json", "NoDB", None, None, 0, does_not_raise(), id="Unknown component"),
+            pytest.param("datasets_several.json", "TestDB", "LOREM", None, 0, does_not_raise(), id="Unknown species"),
+        ],
+    )
+    def test_list_datasets(
+        self,
+        data_dir: Path,
+        engine: Engine,
+        shared_orgs_file: Path,
+        datasets_file: Path,
+        component: Optional[str],
+        organism: Optional[str],
+        dataset: Optional[str],
+        number_expected: int,
+        expectation: ContextManager,
+    ) -> None:
+        """Test getting a filtered list of datasets."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(shared_orgs_file)
+
+        reg.load_datasets(data_dir  / datasets_file)
+        with expectation:
+            datasets = reg.list_datasets(component=component, organism=organism, dataset_name=dataset)
+            assert len(datasets) == number_expected
 
 
-    @pytest.mark.dependency(name="dump_datasets", depends=["get_filtered_datasets"])
+    @pytest.mark.dependency(name="dump_datasets", depends=["list_datasets"])
     @pytest.mark.parametrize(
         "datasets_file, expected_dumped_file, expectation",
         [
@@ -337,6 +338,6 @@ class Test_RNASeqRegistry:
         reg.load_datasets(data_dir / datasets_file)
         dumped_path = tmp_path / "output_dump.json"
         with expectation:
-            datasets = reg.get_filtered_datasets(component=component, organism=organism, dataset_name=dataset)
+            datasets = reg.list_datasets(component=component, organism=organism, dataset_name=dataset)
             reg.dump_datasets(dumped_path, datasets)
             assert_files(dumped_path, data_dir / expected_dumped_file)

@@ -40,6 +40,10 @@ class Component(Base):
 
     def __repr__(self) -> str:
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"
+    
+    def __str__(self) -> str:
+        line = [self.name, f"({len(self.organisms)} organisms)"]
+        return "\t".join(line)
 
 
 class Organism(Base):
@@ -50,10 +54,15 @@ class Organism(Base):
     abbrev: Mapped[str] = mapped_column(String, unique=True)
     component_id: Mapped[int] = mapped_column(ForeignKey("component.id"))
     component: Mapped["Component"] = relationship(back_populates="organisms")
-    datasets: Mapped["Dataset"] = relationship(back_populates="organism")
+    datasets: Mapped[List["Dataset"]] = relationship(back_populates="organism")
 
     def __repr__(self) -> str:
         return f"organism(abbrev={self.abbrev!r}, component={self.component.name!r})"
+    
+    def __str__(self) -> str:
+        n_datasets = len(self.datasets)
+        line = [self.component.name, self.abbrev, f"({n_datasets} datasets)"]
+        return "\t".join(line)
 
 
 class Dataset(Base):
@@ -72,6 +81,11 @@ class Dataset(Base):
 
     def __repr__(self) -> str:
         return f"dataset(from={self.organism}, name={self.name!r}, samples={self.samples!r})"
+    
+    def __str__(self) -> str:
+        n_samples = len(self.samples)
+        line = [self.organism.component.name, self.organism.abbrev, self.name, f"({n_samples} samples)"]
+        return "\t".join(line)
     
     def to_json_struct(self) -> Dict[str, Any]:
         dataset_struct = {
