@@ -48,11 +48,11 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "black",
-    "coverage",
-    "mypy",
-    "pylint",
-    "pytest",
+    "black >= 23.11.0",
+    "coverage >= 7.3.2",
+    "mypy >= 1.2.0",
+    "pylint >= 3.0.2",
+    "pytest >= 7.4.3",
     "types-requests",
 ]
 
