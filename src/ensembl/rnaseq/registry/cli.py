@@ -18,6 +18,7 @@
 Can be imported as a module and called as a script as well, with the same parameters and expected outcome.
 """
 
+import logging
 from os import PathLike
 from pathlib import Path
 
@@ -121,6 +122,20 @@ def change_dataset(args):
         reg.remove_dataset(args.organism, args.remove)
 
 
+def filter_selection(args):
+    """Actions for the subcommand "filter_selection"."""
+    engine = get_engine(args.database)
+    reg = RnaseqRegistry(engine)
+
+    datasets = reg.get_filtered_datasets(args.component, args.organism, args.dataset)
+    if not datasets:
+        logging.warning("No datasets to filter")
+        return
+    
+    if args.dump_file:
+        reg.dump_datasets(Path(args.dump_file), datasets)
+
+
 def main() -> None:
     """Main script entry-point."""
     parser = argparse.ArgumentParser()
@@ -161,7 +176,16 @@ def main() -> None:
     dataset_parser.add_argument("--load", help="Dataset data to load in json format")
     dataset_parser.add_argument("--get", help="Name of a dataset to show")
     dataset_parser.add_argument("--remove", help="Name of a dataset to remove")
-    dataset_parser.add_argument("--organism", help="Name of a organism for this dataset")
+    dataset_parser.add_argument("--organism", help="Name of an organism for this dataset")
+
+    # Selection submenu
+    selection_parser = subparsers.add_parser("selection")
+    selection_parser.set_defaults(func=filter_selection)
+    selection_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
+    selection_parser.add_argument("--component", help="Name of a component")
+    selection_parser.add_argument("--organism", help="Name of an organism")
+    selection_parser.add_argument("--dataset", help="Name of a dataset")
+    selection_parser.add_argument("--dump_file", help="File where the selected datasets will be dumped")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
