@@ -17,7 +17,7 @@ Unit tests for the RNA-Seq registry API.
 """
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from typing import ContextManager
+from typing import ContextManager, Optional
 
 import pytest
 from pytest import raises
@@ -241,6 +241,41 @@ class Test_RNASeqRegistry:
         reg.load_datasets(shared_dataset_file)
         with expectation:
             assert reg.get_dataset(organism_name, dataset_name)
+
+    @pytest.mark.dependency(name="get_filtered_dataset", depends=["get_dataset"])
+    @pytest.mark.parametrize(
+        "datasets_file, component, organism, dataset, number_expected, expectation",
+        [
+            pytest.param("datasets_several.json", None, "speciesA", "dataset_A1", 1, does_not_raise(), id="Get 1 exact dataset"),
+            pytest.param("datasets_several.json", None, "speciesA", None, 2, does_not_raise(), id="Datasets for 1 species"),
+            pytest.param("datasets_several.json", "TestDB", None, None, 3, does_not_raise(), id="Datasets for 1 component"),
+            pytest.param("datasets_several.json", "NoDB", None, None, 0, does_not_raise(), id="Unknown component"),
+            pytest.param("datasets_several.json", "TestDB", "LOREM", None, 0, does_not_raise(), id="Unknown species"),
+        ],
+    )
+    def test_get_filterd_dataset(
+        self,
+        data_dir: Path,
+        engine: Engine,
+        shared_orgs_file: Path,
+        datasets_file: Path,
+        component: Optional[str],
+        organism: Optional[str],
+        dataset: Optional[str],
+        number_expected: int,
+        expectation: ContextManager,
+    ) -> None:
+        """Test getting a filtered list of datasets."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(shared_orgs_file)
+
+        reg.load_datasets(data_dir  / datasets_file)
+        with expectation:
+            datasets = reg.get_filtered_datasets(component=component, organism=organism, dataset_name=dataset)
+            assert len(datasets) == number_expected
+
 
     @pytest.mark.dependency(name="remove_dataset", depends=["load_dataset", "get_dataset"])
     @pytest.mark.parametrize(

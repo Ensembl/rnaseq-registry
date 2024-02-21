@@ -257,3 +257,27 @@ class RnaseqRegistry:
         dataset = self.get_dataset(organism_name, dataset_name)
         self.session.delete(dataset)
         self.session.commit()
+
+    def get_filtered_datasets(
+        self, component: str = "", organism: str = "", dataset_name: str = ""
+    ) -> List[Dataset]:
+        """Get all datasets with the provided filters."""
+
+        stmt = (
+            select(Dataset)
+            .join(Organism)
+            .join(Component)
+            .options(
+                joinedload(Dataset.samples),
+                joinedload(Dataset.organism),
+            )
+        )
+        if component:
+            stmt = stmt.where(Component.name == component)
+        if organism:
+            stmt = stmt.where(Organism.abbrev == organism)
+        if dataset_name:
+            stmt = stmt.where(Dataset.name == dataset_name)
+
+        datasets = self.session.scalars(stmt).unique()
+        return list(datasets)
