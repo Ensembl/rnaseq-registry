@@ -16,7 +16,7 @@
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
 from typing import Dict, List
-from sqlalchemy import String, ForeignKey, UniqueConstraint
+from sqlalchemy import Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column, relationship
 
@@ -72,6 +72,8 @@ class Dataset(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
+    release: Mapped[int] = mapped_column(Integer, default=0)
+
     organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
     organism: Mapped["Organism"] = relationship(back_populates="datasets")
     UniqueConstraint(name, organism_id)
@@ -84,7 +86,7 @@ class Dataset(Base):
 
     def __str__(self) -> str:
         n_samples = len(self.samples)
-        line = [self.organism.component.name, self.organism.abbrev, self.name, f"({n_samples} samples)"]
+        line = [str(self.release), self.organism.component.name, self.organism.abbrev, self.name, f"({n_samples} samples)"]
         return "\t".join(line)
 
     def to_json_struct(self) -> Dict:
@@ -93,6 +95,7 @@ class Dataset(Base):
             "component": self.organism.component.name,
             "species": self.organism.abbrev,
             "name": self.name,
+            "release": self.release,
         }
         runs: List[Dict] = []
         for sample in self.samples:

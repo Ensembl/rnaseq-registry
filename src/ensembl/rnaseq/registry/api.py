@@ -196,11 +196,12 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def load_datasets(self, input_file: PathLike) -> int:
+    def load_datasets(self, input_file: PathLike, release: Optional[int] = None) -> int:
         """Import datasets from a json file.
 
         Args:
         input_file : Path to the input json file.
+        release: Release number for that dataset.
         """
         # Validate the json file
         json_schema_file = _RNASEQ_SCHEMA_PATH
@@ -223,8 +224,10 @@ class RnaseqRegistry:
             for run in dataset["runs"]:
                 accessions = [Accession(sra_id=acc) for acc in run["accessions"]]
                 samples.append(Sample(name=run["name"], accessions=accessions))
+            if "release" in dataset:
+                release = dataset["release"]
             new_dataset = Dataset(
-                name=dataset["name"], organism_id=abbrevs[organism_name].id, samples=samples
+                name=dataset["name"], organism_id=abbrevs[organism_name].id, samples=samples, release=release
             )
             new_datasets_list.append(new_dataset)
             loaded_count += 1
@@ -239,7 +242,7 @@ class RnaseqRegistry:
         self.session.delete(dataset)
         self.session.commit()
 
-    def list_datasets(self, component: str = "", organism: str = "", dataset_name: str = "") -> List[Dataset]:
+    def list_datasets(self, component: str = "", organism: str = "", dataset_name: str = "", release: Optional[int] = None) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
         stmt = (
@@ -257,6 +260,8 @@ class RnaseqRegistry:
             stmt = stmt.where(Organism.abbrev == organism)
         if dataset_name:
             stmt = stmt.where(Dataset.name == dataset_name)
+        if release is not None:
+            stmt = stmt.where(Dataset.release == release)
 
         datasets = self.session.scalars(stmt).unique()
         return list(datasets)
