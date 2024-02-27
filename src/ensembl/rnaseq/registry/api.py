@@ -138,7 +138,7 @@ class RnaseqRegistry:
 
     def list_organisms(self, component: Optional[str] = None) -> List[Organism]:
         """List all organisms.
-        
+
         Args:
         component: filter by component.
         """
@@ -255,14 +255,11 @@ class RnaseqRegistry:
         return dataset
 
     def remove_dataset(self, dataset: Dataset) -> None:
-        """Delete a dataset.
-        """
+        """Delete a dataset."""
         self.session.delete(dataset)
         self.session.commit()
 
-    def list_datasets(
-        self, component: str = "", organism: str = "", dataset_name: str = ""
-    ) -> List[Dataset]:
+    def list_datasets(self, component: str = "", organism: str = "", dataset_name: str = "") -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
         stmt = (
@@ -285,7 +282,7 @@ class RnaseqRegistry:
         return list(datasets)
 
     def dump_datasets(self, dump_path: Path, datasets: List[Dataset]) -> None:
-        
+
         json_data = [dataset.to_json_struct() for dataset in datasets]
         with dump_path.open("w") as out_json:
             out_json.write(json.dumps(json_data, indent=2, sort_keys=True))

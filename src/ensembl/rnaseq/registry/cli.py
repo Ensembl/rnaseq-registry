@@ -116,7 +116,9 @@ def change_dataset(args):
         loaded_count = reg.load_datasets(args.load)
         print(f"Loaded {loaded_count} datasets")
     else:
-        datasets = reg.list_datasets(component=args.component, organism=args.organism, dataset_name=args.dataset)
+        datasets = reg.list_datasets(
+            component=args.component, organism=args.organism, dataset_name=args.dataset
+        )
 
         if args.list:
             print(f"{len(datasets)} datasets selected")

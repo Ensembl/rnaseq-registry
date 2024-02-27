@@ -15,7 +15,7 @@
 
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
-from typing import Any, Dict, List
+from typing import Dict, List
 from sqlalchemy import String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column, relationship
@@ -40,7 +40,7 @@ class Component(Base):
 
     def __repr__(self) -> str:
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"
-    
+
     def __str__(self) -> str:
         line = [self.name, f"({len(self.organisms)} organisms)"]
         return "\t".join(line)
@@ -58,7 +58,7 @@ class Organism(Base):
 
     def __repr__(self) -> str:
         return f"organism(abbrev={self.abbrev!r}, component={self.component.name!r})"
-    
+
     def __str__(self) -> str:
         n_datasets = len(self.datasets)
         line = [self.component.name, self.abbrev, f"({n_datasets} datasets)"]
@@ -81,25 +81,24 @@ class Dataset(Base):
 
     def __repr__(self) -> str:
         return f"dataset(from={self.organism}, name={self.name!r}, samples={self.samples!r})"
-    
+
     def __str__(self) -> str:
         n_samples = len(self.samples)
         line = [self.organism.component.name, self.organism.abbrev, self.name, f"({n_samples} samples)"]
         return "\t".join(line)
-    
-    def to_json_struct(self) -> Dict[str, Any]:
-        dataset_struct = {
+
+    def to_json_struct(self) -> Dict:
+        """Represent the data ready to be dumped as json."""
+        dataset_struct: Dict = {
             "component": self.organism.component.name,
             "species": self.organism.abbrev,
             "name": self.name,
-            "runs": [],
         }
+        runs: List[Dict] = []
         for sample in self.samples:
             accessions = [acc.sra_id for acc in sample.accessions]
-            dataset_struct["runs"].append({
-                "name": sample.name,
-                "accessions": accessions
-            })
+            runs.append({"name": sample.name, "accessions": accessions})
+        dataset_struct["runs"] = runs
         return dataset_struct
 
 
