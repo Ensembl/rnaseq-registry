@@ -112,11 +112,11 @@ def change_dataset(args):
     reg = RnaseqRegistry(engine)
 
     if args.load:
-        loaded_count = reg.load_datasets(args.load)
+        loaded_count = reg.load_datasets(args.load, release=args.release)
         print(f"Loaded {loaded_count} datasets")
     else:
         datasets = reg.list_datasets(
-            component=args.component, organism=args.organism, dataset_name=args.dataset
+            component=args.component, organism=args.organism, dataset_name=args.dataset, release=args.release
         )
 
         if args.list:
@@ -173,6 +173,7 @@ def main() -> None:
     dataset_parser.add_argument("--component", help="Filter with a component")
     dataset_parser.add_argument("--organism", help="Filter with an organism")
     dataset_parser.add_argument("--dataset", help="Filter with a dataset name")
+    dataset_parser.add_argument("--release", help="Filter with a release (or use this value to load as default)")
     dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
     dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
     dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")

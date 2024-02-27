@@ -2,6 +2,7 @@
   {
     "component": "TestDB",
     "name": "dataset_A1",
+    "release": 0,
     "runs": [
       {
         "accessions": [
@@ -15,6 +16,7 @@
   {
     "component": "TestDB",
     "name": "dataset_A2",
+    "release": 0,
     "runs": [
       {
         "accessions": [
@@ -28,6 +30,7 @@
   {
     "component": "TestDB",
     "name": "dataset_A1",
+    "release": 0,
     "runs": [
       {
         "accessions": [
