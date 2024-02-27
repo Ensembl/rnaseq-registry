@@ -232,7 +232,7 @@ class Test_RNASeqRegistry:
         dataset_name: str,
         expectation: ContextManager,
     ) -> None:
-        """Test adding a new component."""
+        """Test removing a dataset."""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()
