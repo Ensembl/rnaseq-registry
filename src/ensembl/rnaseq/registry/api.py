@@ -234,26 +234,6 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def get_dataset(self, organism_name: str, dataset_name: str) -> Dataset:
-        """Retrieve a dataset for a given organism.
-
-        Args:
-        name : Name of the dataset.
-        """
-        stmt = (
-            select(Dataset)
-            .join(Organism)
-            .options(
-                joinedload(Dataset.samples),
-            )
-            .where(Dataset.name == dataset_name)
-            .where(Organism.abbrev == organism_name)
-        )
-        dataset = self.session.scalars(stmt).first()
-        if not dataset:
-            raise ValueError(f"No dataset named {dataset_name} for {organism_name}")
-        return dataset
-
     def remove_dataset(self, dataset: Dataset) -> None:
         """Delete a dataset."""
         self.session.delete(dataset)
