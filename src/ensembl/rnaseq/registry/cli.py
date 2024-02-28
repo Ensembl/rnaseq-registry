@@ -112,7 +112,9 @@ def change_dataset(args):
     reg = RnaseqRegistry(engine)
 
     if args.load:
-        loaded_count = reg.load_datasets(args.load, release=args.release, replace=args.replace, ignore=args.ignore)
+        loaded_count = reg.load_datasets(
+            args.load, release=args.release, replace=args.replace, ignore=args.ignore
+        )
         print(f"Loaded {loaded_count} datasets")
     else:
         datasets = reg.list_datasets(
@@ -132,8 +134,8 @@ def change_dataset(args):
             reg.dump_datasets(Path(args.dump_file), datasets)
 
 
-def do_nothing(args) -> None:
-    pass
+def do_nothing(_) -> None:
+    """If no subparser argument, do nothing"""
 
 
 def main() -> None:
@@ -178,9 +180,15 @@ def main() -> None:
     dataset_parser.add_argument("--component", help="Filter with a component")
     dataset_parser.add_argument("--organism", help="Filter with an organism")
     dataset_parser.add_argument("--dataset", help="Filter with a dataset name")
-    dataset_parser.add_argument("--release", help="Filter with a release (or use this value to load as default)")
-    dataset_parser.add_argument("--replace", action="store_true", help="Replace duplicate datasets when loading")
-    dataset_parser.add_argument("--ignore", action="store_true", help="Ignore duplicate datasets when loading and load the rest")
+    dataset_parser.add_argument(
+        "--release", help="Filter with a release (or use this value to load as default)"
+    )
+    dataset_parser.add_argument(
+        "--replace", action="store_true", help="Replace duplicate datasets when loading"
+    )
+    dataset_parser.add_argument(
+        "--ignore", action="store_true", help="Ignore duplicate datasets when loading and load the rest"
+    )
     dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
     dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
     dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")
