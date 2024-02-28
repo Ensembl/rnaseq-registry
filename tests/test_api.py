@@ -211,7 +211,7 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(shared_orgs_file)
         with expectation:
-            assert reg.load_datasets(data_dir / dataset_file, release=10)
+            assert reg.load_datasets(data_dir / dataset_file, release=release)
 
 
     @pytest.mark.dependency(name="list_datasets", depends=["load_datasets"])

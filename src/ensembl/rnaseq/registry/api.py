@@ -286,7 +286,7 @@ class RnaseqRegistry:
         self.session.commit()
 
     def list_datasets(
-        self, component: str = "", organism: str = "", dataset_name: str = "", release: Optional[int] = None
+        self, component: Optional[str] = None, organism: Optional[str] = None, dataset_name: Optional[str] = None, release: Optional[int] = None
     ) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
