@@ -82,11 +82,14 @@ class Dataset(Base):
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
 
     def __repr__(self) -> str:
-        return f"dataset(from={self.organism}, name={self.name!r}, samples={self.samples!r})"
+        return f"dataset(from={self.organism!r}, name={self.name!r}, samples={len(self.samples)})"
 
     def __str__(self) -> str:
         n_samples = len(self.samples)
-        line = [str(self.release), self.organism.component.name, self.organism.abbrev, self.name, f"({n_samples} samples)"]
+        line = [str(self.release)]
+        if self.organism:
+            line += [self.organism.component.name, self.organism.abbrev]
+        line += [self.name, f"({n_samples} samples)"]
         return "\t".join(line)
 
     def to_json_struct(self) -> Dict:
