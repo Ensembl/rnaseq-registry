@@ -42,7 +42,8 @@ class Component(Base):
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"
 
     def __str__(self) -> str:
-        line = [self.name, f"({len(self.organisms)} organisms)"]
+        datasets_count = sum([len(org.datasets) for org in self.organisms])
+        line = [self.name, f"({len(self.organisms)} organisms)", f"({datasets_count} datasets)"]
         return "\t".join(line)
 
 

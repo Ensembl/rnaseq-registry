@@ -141,7 +141,7 @@ class RnaseqRegistry:
         self.session.delete(organism)
         self.session.commit()
 
-    def list_organisms(self, component: Optional[str] = None) -> List[Organism]:
+    def list_organisms(self, component: Optional[str] = None, with_dataset: bool = False) -> List[Organism]:
         """List all organisms.
 
         Args:
@@ -152,6 +152,8 @@ class RnaseqRegistry:
         if component:
             stmt = stmt.where(Component.name == component)
         organisms = list(self.session.scalars(stmt).all())
+        if with_dataset:
+            organisms = [org for org in organisms if len(org.datasets) > 0]
         return organisms
 
     def load_organisms(self, input_file: PathLike) -> int:
