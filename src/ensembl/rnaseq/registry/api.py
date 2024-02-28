@@ -15,7 +15,7 @@
 """RNA-Seq registry API module."""
 
 import json
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pathlib import Path
 from os import PathLike
 
@@ -27,10 +27,15 @@ from ensembl.rnaseq.registry.database_schema import Base, Component, Organism, D
 
 __all__ = [
     "RnaseqRegistry",
+    "DBValueError",
 ]
 
 cur_dir = Path(__file__).parent
 _RNASEQ_SCHEMA_PATH = Path(cur_dir, "schemas/brc4_rnaseq_schema.json")
+
+
+class DBValueError(Exception):
+    """Raise if there is an issue with a data to enter in the database."""
 
 
 class RnaseqRegistry:
@@ -196,7 +201,9 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def load_datasets(self, input_file: PathLike, release: Optional[int] = None, replace: bool = False, ignore: bool = False) -> int:
+    def load_datasets(
+        self, input_file: PathLike, release: Optional[int] = None, replace: bool = False, ignore: bool = False
+    ) -> int:
         """Import datasets from a json file.
 
         Args:
@@ -215,7 +222,7 @@ class RnaseqRegistry:
         abbrevs = {org.abbrev: org for org in self.list_organisms()}
         new_datasets_list: List = []
         loaded_count = 0
-    
+
         # Get the existing datasets
         cur_datasets: Dict[str, Dict] = {abb: {} for abb in abbrevs}
         for cur_dataset in self.list_datasets():
@@ -230,7 +237,7 @@ class RnaseqRegistry:
                 continue
             try:
                 cur_dataset = cur_datasets[organism_name][dataset["name"]]
-                if  cur_dataset is not None:
+                if cur_dataset is not None:
                     print(f"Dataset {organism_name}/{dataset['name']} is already in the registry")
                     if replace:
                         print(f"To delete: {cur_dataset}")
@@ -242,13 +249,13 @@ class RnaseqRegistry:
                 pass
 
             checked_json_data.append(dataset)
-        
+
         diff_data = len(json_data) - len(checked_json_data)
         if diff_data > 0:
             if not ignore:
-                print(f"{diff_data}/{len(json_data)} datasets can not be loaded (use either --replace or --ignore)")
+                print(f"{diff_data}/{len(json_data)} datasets can not be loaded (use --replace or --ignore)")
                 return 0
-        
+
         # Second run to actually add things
         for dataset in checked_json_data:
             organism_name = dataset["species"]
@@ -276,7 +283,9 @@ class RnaseqRegistry:
         self.session.delete(dataset)
         self.session.commit()
 
-    def list_datasets(self, component: str = "", organism: str = "", dataset_name: str = "", release: Optional[int] = None) -> List[Dataset]:
+    def list_datasets(
+        self, component: str = "", organism: str = "", dataset_name: str = "", release: Optional[int] = None
+    ) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
         stmt = (
@@ -301,7 +310,13 @@ class RnaseqRegistry:
         return list(datasets)
 
     def dump_datasets(self, dump_path: Path, datasets: List[Dataset]) -> None:
+        """Print the datasets to a file.
 
+        Args:
+        dump_path: Path to a file to dump the data.
+        datasets: List of datasets to dump.
+
+        """
         json_data = [dataset.to_json_struct() for dataset in datasets]
         with dump_path.open("w") as out_json:
             out_json.write(json.dumps(json_data, indent=2, sort_keys=True))
