@@ -196,7 +196,7 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def load_datasets(self, input_file: PathLike, release: Optional[int] = None) -> int:
+    def load_datasets(self, input_file: PathLike, release: Optional[int] = None, replace: bool = False, ignore: bool = False) -> int:
         """Import datasets from a json file.
 
         Args:
@@ -211,23 +211,57 @@ class RnaseqRegistry:
             schema = json.load(schema_fh)
         validate(instance=json_data, schema=schema)
 
-        # Load the datasets
+        # Get the existing abbrevs
         abbrevs = {org.abbrev: org for org in self.list_organisms()}
         new_datasets_list: List = []
         loaded_count = 0
+    
+        # Get the existing datasets
+        cur_datasets: Dict[str, Dict] = {abb: {} for abb in abbrevs}
+        for cur_dataset in self.list_datasets():
+            cur_datasets[cur_dataset.organism.abbrev][cur_dataset.name] = cur_dataset
+
+        # First run to check if the datasets are already loaded
+        checked_json_data = []
         for dataset in json_data:
             organism_name = dataset["species"]
             if not organism_name in abbrevs:
                 print(f"Organism '{organism_name}' is not in the registry")
                 continue
+            try:
+                cur_dataset = cur_datasets[organism_name][dataset["name"]]
+                if  cur_dataset is not None:
+                    print(f"Dataset {organism_name}/{dataset['name']} is already in the registry")
+                    if replace:
+                        print(f"To delete: {cur_dataset}")
+                        self.session.delete(cur_dataset)
+                        self.session.commit()
+                    else:
+                        continue
+            except KeyError:
+                pass
+
+            checked_json_data.append(dataset)
+        
+        diff_data = len(json_data) - len(checked_json_data)
+        if diff_data > 0:
+            if not ignore:
+                print(f"{diff_data}/{len(json_data)} datasets can not be loaded (use either --replace or --ignore)")
+                return 0
+        
+        # Second run to actually add things
+        for dataset in checked_json_data:
+            organism_name = dataset["species"]
             samples = []
             for run in dataset["runs"]:
                 accessions = [Accession(sra_id=acc) for acc in run["accessions"]]
                 samples.append(Sample(name=run["name"], accessions=accessions))
             if "release" in dataset:
                 release = dataset["release"]
+
+            organism = abbrevs[organism_name]
             new_dataset = Dataset(
-                name=dataset["name"], organism_id=abbrevs[organism_name].id, samples=samples, release=release
+                name=dataset["name"], organism_id=organism.id, samples=samples, release=release
             )
             new_datasets_list.append(new_dataset)
             loaded_count += 1
