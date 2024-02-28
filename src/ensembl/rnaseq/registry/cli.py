@@ -132,10 +132,15 @@ def change_dataset(args):
             reg.dump_datasets(Path(args.dump_file), datasets)
 
 
+def do_nothing(args) -> None:
+    pass
+
+
 def main() -> None:
     """Main script entry-point."""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="Subcommands")
+    parser.set_defaults(func=do_nothing)
 
     # Create submenu
     create_parser = subparsers.add_parser("create")
@@ -183,11 +188,7 @@ def main() -> None:
     # Parse args and start the submenu action
     args = parser.parse_args()
 
-    try:
-        args.func(args)
-    except AttributeError as err:
-        print(err)
-        parser.print_help()
+    args.func(args)
 
 
 if __name__ == "__main__":
