@@ -97,7 +97,7 @@ def change_organism(args):
         reg.remove_organism(args.remove)
 
     elif args.list:
-        organisms = reg.list_organisms(args.component)
+        organisms = reg.list_organisms(args.component, args.with_datasets)
         for organism in organisms:
             print(organism)
 
@@ -122,7 +122,7 @@ def change_dataset(args):
         )
 
         if args.list:
-            print(f"{len(datasets)} datasets selected")
+            # print(f"{len(datasets)} datasets selected")
             for dataset in datasets:
                 print(dataset)
 
@@ -168,6 +168,7 @@ def main() -> None:
     organism_parser.add_argument("--remove", help="Name of a organism to remove")
     organism_parser.add_argument("--get", help="Name of a organism to show")
     organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
+    organism_parser.add_argument("--with_datasets", action="store_true", help="Print the list of organisms with datasets")
     organism_parser.add_argument(
         "--load", help="Load organism abbrevs and components from a tab file (component\torganism_abbrev)"
     )
