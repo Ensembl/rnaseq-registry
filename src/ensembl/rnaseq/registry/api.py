@@ -233,10 +233,16 @@ class RnaseqRegistry:
         # First run to check if the datasets are already loaded
         checked_json_data = []
         for dataset in json_data:
+            component = dataset["component"]
             organism_name = dataset["species"]
             if not organism_name in abbrevs:
                 print(f"Organism '{organism_name}' is not in the registry")
-                continue
+                if replace:
+                    print(f"To add: {component}/{organism_name}")
+                    org = self.add_organism(organism_name, component)
+                    abbrevs[organism_name] = org
+                else:
+                    continue
             try:
                 cur_dataset = cur_datasets[organism_name][dataset["name"]]
                 if cur_dataset is not None:
