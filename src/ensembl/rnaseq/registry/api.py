@@ -294,10 +294,13 @@ class RnaseqRegistry:
             select(Dataset)
             .join(Organism)
             .join(Component)
+            .join(Sample)
+            .join(Accession)
             .options(
                 joinedload(Dataset.samples),
                 joinedload(Dataset.organism),
             )
+            .order_by(Component.name, Organism.abbrev, Dataset.name, Sample.name, Accession.sra_id)
         )
         if component:
             stmt = stmt.where(Component.name == component)
