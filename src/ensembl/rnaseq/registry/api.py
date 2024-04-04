@@ -292,7 +292,7 @@ class RnaseqRegistry:
         self.session.commit()
 
     def list_datasets(
-        self, component: Optional[str] = None, organism: Optional[str] = None, dataset_name: Optional[str] = None, release: Optional[int] = None
+        self, component: Optional[str] = None, organism: Optional[str] = None, dataset_name: Optional[str] = None, release: Optional[int] = None, include_retired: bool = False,
     ) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
@@ -316,6 +316,8 @@ class RnaseqRegistry:
             stmt = stmt.where(Dataset.name == dataset_name)
         if release is not None:
             stmt = stmt.where(Dataset.release == release)
+        if not include_retired:
+            stmt = stmt.where(Dataset.retired == 0)
 
         datasets = self.session.scalars(stmt).unique()
         return list(datasets)
