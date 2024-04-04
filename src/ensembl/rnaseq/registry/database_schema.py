@@ -74,22 +74,25 @@ class Dataset(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     release: Mapped[int] = mapped_column(Integer, default=0)
+    retired: Mapped[int] = mapped_column(Integer, default=0)
 
     organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
     organism: Mapped["Organism"] = relationship(back_populates="datasets")
-    UniqueConstraint(name, organism_id)
+    UniqueConstraint(name, organism_id, retired)
 
     # Relationships
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
 
     def __repr__(self) -> str:
-        return f"dataset(from={self.organism!r}, name={self.name!r}, samples={len(self.samples)})"
+        return f"dataset(from={self.organism!r}, name={self.name!r}, samples={len(self.samples)}, retired={self.retired})"
 
     def __str__(self) -> str:
         n_samples = len(self.samples)
         line = [str(self.release)]
         if self.organism:
             line += [self.organism.component.name, self.organism.abbrev]
+        if self.retired > 0:
+            line += [f"retired in {self.retired}"]
         line += [self.name, f"({n_samples} samples)"]
         return "\t".join(line)
 
