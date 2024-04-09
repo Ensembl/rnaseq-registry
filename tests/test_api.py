@@ -47,7 +47,7 @@ class Test_RNASeqRegistry:
     @pytest.fixture(scope="function")
     def engine(self) -> Engine:
         """Generate the Engine. Use an in-memory DB."""
-        test_engine = create_engine("sqlite:///:memory:")
+        test_engine = create_engine("sqlite:///:memory:", echo=True)
         return test_engine
 
     # Tests start here
@@ -214,7 +214,7 @@ class Test_RNASeqRegistry:
             assert reg.load_datasets(data_dir / dataset_file, release=release)
 
 
-    @pytest.mark.dependency(name="list_datasets", depends=["load_datasets"])
+    @pytest.mark.dependency(name="list_datasets")
     @pytest.mark.parametrize(
         "datasets_file, component, organism, dataset, in_release, out_release, number_expected, expectation",
         [
@@ -247,7 +247,10 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(shared_orgs_file)
 
-        reg.load_datasets(data_dir / datasets_file, release=in_release)
+        if in_release is not None:
+            reg.load_datasets(data_dir / datasets_file, release=in_release)
+        else:
+            reg.load_datasets(data_dir / datasets_file)
         with expectation:
             datasets = reg.list_datasets(component=component, organism=organism, dataset_name=dataset, release=out_release)
             assert len(datasets) == number_expected
