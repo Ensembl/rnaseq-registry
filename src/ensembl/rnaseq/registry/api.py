@@ -204,7 +204,7 @@ class RnaseqRegistry:
         return loaded_count
 
     def load_datasets(
-        self, input_file: PathLike, release: Optional[int] = None, replace: bool = False, ignore: bool = False
+        self, input_file: PathLike, release: int = 0, replace: bool = False, ignore: bool = False
     ) -> int:
         """Import datasets from a json file.
 
@@ -227,8 +227,8 @@ class RnaseqRegistry:
 
         # Get the existing datasets
         cur_datasets: Dict[str, Dict] = {abb: {} for abb in abbrevs}
-        for cur_dataset in self.list_datasets():
-            cur_datasets[cur_dataset.organism.abbrev][cur_dataset.name] = cur_dataset
+        for cur_dataset_tmp in self.list_datasets():
+            cur_datasets[cur_dataset_tmp.organism.abbrev][cur_dataset_tmp.name] = cur_dataset_tmp
 
         # First run to check if the datasets are already loaded
         checked_json_data = []
@@ -236,22 +236,24 @@ class RnaseqRegistry:
             component = dataset["component"]
             organism_name = dataset["species"]
             if not organism_name in abbrevs:
-                print(f"Organism '{organism_name}' is not in the registry")
                 if replace:
-                    print(f"To add: {component}/{organism_name}")
+                    print(f"ADD organism '{organism_name}' not in the registry")
                     org = self.add_organism(organism_name, component)
                     abbrevs[organism_name] = org
                 else:
+                    print(f"SKIP organism '{organism_name}' not in the registry")
                     continue
             try:
-                cur_dataset = cur_datasets[organism_name][dataset["name"]]
+                cur_dataset: Dataset = cur_datasets[organism_name][dataset["name"]]
                 if cur_dataset is not None:
-                    print(f"Dataset {organism_name}/{dataset['name']} is already in the registry")
                     if replace:
-                        print(f"To delete: {cur_dataset}")
-                        self.session.delete(cur_dataset)
+                        print(f"REPLACE dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
+                        cur_dataset.latest = False
+                        if release:
+                            cur_dataset.retired = release
                         self.session.commit()
                     else:
+                        print(f"SKIP dataset {organism_name}/{dataset['name']} already in {cur_dataset.release}")
                         continue
             except KeyError:
                 pass
@@ -292,7 +294,7 @@ class RnaseqRegistry:
         self.session.commit()
 
     def list_datasets(
-        self, component: Optional[str] = None, organism: Optional[str] = None, dataset_name: Optional[str] = None, release: Optional[int] = None, include_retired: bool = False,
+        self, component: Optional[str] = None, organism: Optional[str] = None, dataset_name: Optional[str] = None, release: Optional[int] = None, latest: Optional[bool] = True,
     ) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
@@ -306,7 +308,7 @@ class RnaseqRegistry:
                 joinedload(Dataset.samples),
                 joinedload(Dataset.organism),
             )
-            .order_by(Component.name, Organism.abbrev, Dataset.name, Sample.name, Accession.sra_id)
+            .order_by(Dataset.release, Component.name, Organism.abbrev, Dataset.name, Sample.name, Accession.sra_id)
         )
         if component:
             stmt = stmt.where(Component.name == component)
@@ -316,8 +318,8 @@ class RnaseqRegistry:
             stmt = stmt.where(Dataset.name == dataset_name)
         if release is not None:
             stmt = stmt.where(Dataset.release == release)
-        if not include_retired:
-            stmt = stmt.where(Dataset.retired == 0)
+        if latest is not None:
+            stmt = stmt.where(Dataset.latest == latest)
 
         datasets = self.session.scalars(stmt).unique()
         return list(datasets)

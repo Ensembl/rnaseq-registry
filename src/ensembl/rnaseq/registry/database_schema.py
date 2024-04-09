@@ -16,7 +16,7 @@
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
 from typing import Dict, List
-from sqlalchemy import Integer, String, ForeignKey, UniqueConstraint
+from sqlalchemy import Boolean, Integer, String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column, relationship
 
@@ -75,10 +75,11 @@ class Dataset(Base):
     name: Mapped[str] = mapped_column(String)
     release: Mapped[int] = mapped_column(Integer, default=0)
     retired: Mapped[int] = mapped_column(Integer, default=0)
+    latest: Mapped[bool] = mapped_column(Boolean, default=True)
 
     organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
     organism: Mapped["Organism"] = relationship(back_populates="datasets")
-    UniqueConstraint(name, organism_id, retired)
+    UniqueConstraint(name, organism_id, latest, retired)
 
     # Relationships
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
@@ -89,10 +90,10 @@ class Dataset(Base):
     def __str__(self) -> str:
         n_samples = len(self.samples)
         line = [str(self.release)]
+        if not self.latest:
+            line += [f"retired {self.retired}"]
         if self.organism:
             line += [self.organism.component.name, self.organism.abbrev]
-        if self.retired > 0:
-            line += [f"retired in {self.retired}"]
         line += [self.name, f"({n_samples} samples)"]
         return "\t".join(line)
 

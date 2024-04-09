@@ -117,8 +117,11 @@ def change_dataset(args):
         )
         print(f"Loaded {loaded_count} datasets")
     else:
+        latest = True
+        if args.retired:
+            latest = False
         datasets = reg.list_datasets(
-            component=args.component, organism=args.organism, dataset_name=args.dataset, release=args.release
+            component=args.component, organism=args.organism, dataset_name=args.dataset, release=args.release, latest=latest
         )
 
         if args.list:
@@ -183,6 +186,9 @@ def main() -> None:
     dataset_parser.add_argument("--dataset", help="Filter with a dataset name")
     dataset_parser.add_argument(
         "--release", help="Filter with a release (or use this value to load as default)"
+    )
+    dataset_parser.add_argument(
+        "--retired", action="store_true", help="Show retired datasets"
     )
     dataset_parser.add_argument(
         "--replace", action="store_true", help="Replace duplicate datasets when loading"
