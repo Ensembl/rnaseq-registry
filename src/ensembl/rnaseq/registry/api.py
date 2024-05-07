@@ -239,7 +239,7 @@ class RnaseqRegistry:
 
         Args:
         dataset_name : Name of the dataset.
-        organism_name : Organism abbrev associated with the dataset. 
+        organism_name : Organism abbrev associated with the dataset.
         """
         stmt = (
             select(Dataset)
