@@ -238,7 +238,8 @@ class RnaseqRegistry:
         """Retrieve a dataset for a given organism.
 
         Args:
-        name : Name of the dataset.
+        dataset_name : Name of the dataset.
+        organism_name : Organism abbrev associated with the dataset. 
         """
         stmt = (
             select(Dataset)
