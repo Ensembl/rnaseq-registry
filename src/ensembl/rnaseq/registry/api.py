@@ -248,10 +248,7 @@ class RnaseqRegistry:
                 if cur_dataset is not None:
                     if replace:
                         print(f"REPLACE dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
-                        cur_dataset.latest = False
-                        if release:
-                            cur_dataset.retired = release
-                        self.session.commit()
+                        self.retire_dataset(cur_dataset, release)
                     else:
                         print(f"SKIP dataset {organism_name}/{dataset['name']} already in {cur_dataset.release}")
                         continue
@@ -291,6 +288,13 @@ class RnaseqRegistry:
     def remove_dataset(self, dataset: Dataset) -> None:
         """Delete a dataset."""
         self.session.delete(dataset)
+        self.session.commit()
+
+    def retire_dataset(self, dataset: Dataset, release: Optional[int] = 0) -> None:
+        """Delete a dataset."""
+        dataset.latest = False
+        if release is not None:
+            dataset.retired = release
         self.session.commit()
 
     def list_datasets(
