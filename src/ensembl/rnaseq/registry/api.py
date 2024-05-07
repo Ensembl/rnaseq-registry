@@ -282,7 +282,7 @@ class RnaseqRegistry:
         return list(datasets)
 
     def dump_datasets(self, dump_path: Path, datasets: List[Dataset]) -> None:
-
+        """Write all datasets in one json file."""
         json_data = [dataset.to_json_struct() for dataset in datasets]
         with dump_path.open("w") as out_json:
             out_json.write(json.dumps(json_data, indent=2, sort_keys=True))

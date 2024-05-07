@@ -18,7 +18,6 @@
 Can be imported as a module and called as a script as well, with the same parameters and expected outcome.
 """
 
-import logging
 from os import PathLike
 from pathlib import Path
 
