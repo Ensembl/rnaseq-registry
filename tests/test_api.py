@@ -17,7 +17,7 @@ Unit tests for the RNA-Seq registry API.
 """
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
-from typing import Callable, ContextManager, Optional
+from typing import Callable, ContextManager
 
 import pytest
 from pytest import raises
@@ -242,7 +242,6 @@ class Test_RNASeqRegistry:
         with expectation:
             assert reg.get_dataset(organism_name, dataset_name)
 
-
     @pytest.mark.dependency(name="remove_dataset", depends=["load_datasets", "get_dataset"])
     @pytest.mark.parametrize(
         "organism_name, dataset_name, expectation",
@@ -277,12 +276,40 @@ class Test_RNASeqRegistry:
     @pytest.mark.parametrize(
         "datasets_file, component, organism, dataset, number_expected, expectation",
         [
-            pytest.param("datasets_several.json", None, None, None, 3, does_not_raise(), id="Get all datasets"),
-            pytest.param("datasets_several.json", None, "speciesA", "dataset_A1", 1, does_not_raise(), id="Get 1 exact dataset"),
-            pytest.param("datasets_several.json", None, "speciesA", None, 2, does_not_raise(), id="Datasets for 1 species"),
-            pytest.param("datasets_several.json", "TestDB", None, None, 3, does_not_raise(), id="Datasets for 1 component"),
-            pytest.param("datasets_several.json", "NoDB", None, None, 0, does_not_raise(), id="Unknown component"),
-            pytest.param("datasets_several.json", "TestDB", "LOREM", None, 0, does_not_raise(), id="Unknown species"),
+            pytest.param("datasets_several.json", "", "", "", 3, does_not_raise(), id="Get all datasets"),
+            pytest.param(
+                "datasets_several.json",
+                "",
+                "speciesA",
+                "dataset_A1",
+                1,
+                does_not_raise(),
+                id="Get 1 exact dataset",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                "",
+                "speciesA",
+                "",
+                2,
+                does_not_raise(),
+                id="Datasets for 1 species",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                "TestDB",
+                "",
+                "",
+                3,
+                does_not_raise(),
+                id="Datasets for 1 component",
+            ),
+            pytest.param(
+                "datasets_several.json", "NoDB", "", "", 0, does_not_raise(), id="Unknown component"
+            ),
+            pytest.param(
+                "datasets_several.json", "TestDB", "LOREM", "", 0, does_not_raise(), id="Unknown species"
+            ),
         ],
     )
     def test_list_datasets(
@@ -291,9 +318,9 @@ class Test_RNASeqRegistry:
         engine: Engine,
         shared_orgs_file: Path,
         datasets_file: Path,
-        component: Optional[str],
-        organism: Optional[str],
-        dataset: Optional[str],
+        component: str,
+        organism: str,
+        dataset: str,
         number_expected: int,
         expectation: ContextManager,
     ) -> None:
@@ -303,17 +330,18 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(shared_orgs_file)
 
-        reg.load_datasets(data_dir  / datasets_file)
+        reg.load_datasets(data_dir / datasets_file)
         with expectation:
             datasets = reg.list_datasets(component=component, organism=organism, dataset_name=dataset)
             assert len(datasets) == number_expected
-
 
     @pytest.mark.dependency(name="dump_datasets", depends=["list_datasets"])
     @pytest.mark.parametrize(
         "datasets_file, expected_dumped_file, expectation",
         [
-            pytest.param("datasets_several.json", "datasets_several_sorted.json", does_not_raise(), id="Dump same file"),
+            pytest.param(
+                "datasets_several.json", "datasets_several_sorted.json", does_not_raise(), id="Dump same file"
+            ),
         ],
     )
     def test_dump_datasets(
@@ -328,9 +356,9 @@ class Test_RNASeqRegistry:
         expectation: ContextManager,
     ) -> None:
         """Test dumping a dataset file."""
-        component = None
-        organism = None
-        dataset = None
+        component = ""
+        organism = ""
+        dataset = ""
 
         reg = RnaseqRegistry(engine)
         reg.create_db()

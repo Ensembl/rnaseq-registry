@@ -18,7 +18,7 @@
 
 from difflib import unified_diff
 from pathlib import Path
-from typing import Any, Callable
+from typing import Callable
 
 import pytest
 from pytest import FixtureRequest
