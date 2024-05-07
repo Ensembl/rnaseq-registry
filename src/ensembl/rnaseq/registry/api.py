@@ -15,15 +15,13 @@
 """RNA-Seq registry API module."""
 
 import json
-from typing import List
+from typing import List, Optional
 from pathlib import Path
 from os import PathLike
 
 from jsonschema import validate
-from sqlalchemy import Engine
-from sqlalchemy import select
-from sqlalchemy.orm import Session
-from sqlalchemy.orm import joinedload
+from sqlalchemy import Engine, select
+from sqlalchemy.orm import Session, joinedload
 
 from ensembl.rnaseq.registry.database_schema import Base, Component, Organism, Dataset, Sample, Accession
 
@@ -93,8 +91,8 @@ class RnaseqRegistry:
     def list_components(self) -> List[Component]:
         """List all components."""
 
-        stmt = select(Component)
-        components = list(self.session.scalars(stmt).unique().all())
+        stmt = select(Component).order_by(Component.name)
+        components = list(self.session.scalars(stmt).all())
         return components
 
     def add_organism(self, name: str, component_name: str) -> Organism:
@@ -138,11 +136,17 @@ class RnaseqRegistry:
         self.session.delete(organism)
         self.session.commit()
 
-    def list_organisms(self) -> List[Organism]:
-        """List all organisms."""
+    def list_organisms(self, component: Optional[str] = None) -> List[Organism]:
+        """List all organisms.
 
-        stmt = select(Organism)
-        organisms = list(self.session.scalars(stmt).unique().all())
+        Args:
+        component: filter by component.
+        """
+
+        stmt = select(Organism).join(Component).order_by(Component.name, Organism.abbrev)
+        if component:
+            stmt = stmt.where(Component.name == component)
+        organisms = list(self.session.scalars(stmt).all())
         return organisms
 
     def load_organisms(self, input_file: PathLike) -> int:
@@ -230,24 +234,56 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def get_dataset(self, name: str) -> Dataset:
-        """Retrieve a dataset.
+    def get_dataset(self, organism_name: str, dataset_name: str) -> Dataset:
+        """Retrieve a dataset for a given organism.
 
         Args:
-        name : Name of the dataset.
+        dataset_name : Name of the dataset.
+        organism_name : Organism abbrev associated with the dataset.
         """
-        stmt = select(Dataset).options(joinedload(Dataset.samples)).where(Dataset.name == name)
+        stmt = (
+            select(Dataset)
+            .join(Organism)
+            .options(
+                joinedload(Dataset.samples),
+            )
+            .where(Dataset.name == dataset_name)
+            .where(Organism.abbrev == organism_name)
+        )
         dataset = self.session.scalars(stmt).first()
         if not dataset:
-            raise ValueError(f"No dataset named {name}")
+            raise ValueError(f"No dataset named {dataset_name} for {organism_name}")
         return dataset
 
-    def remove_dataset(self, name: str) -> None:
-        """Delete a dataset.
-
-        Args:
-        name : Name of the dataset to remove.
-        """
-        dataset = self.get_dataset(name)
+    def remove_dataset(self, dataset: Dataset) -> None:
+        """Delete a dataset."""
         self.session.delete(dataset)
         self.session.commit()
+
+    def list_datasets(self, component: str = "", organism: str = "", dataset_name: str = "") -> List[Dataset]:
+        """Get all datasets with the provided filters."""
+
+        stmt = (
+            select(Dataset)
+            .join(Organism)
+            .join(Component)
+            .options(
+                joinedload(Dataset.samples),
+                joinedload(Dataset.organism),
+            )
+        )
+        if component:
+            stmt = stmt.where(Component.name == component)
+        if organism:
+            stmt = stmt.where(Organism.abbrev == organism)
+        if dataset_name:
+            stmt = stmt.where(Dataset.name == dataset_name)
+
+        datasets = self.session.scalars(stmt).unique()
+        return list(datasets)
+
+    def dump_datasets(self, dump_path: Path, datasets: List[Dataset]) -> None:
+        """Write all datasets in one json file."""
+        json_data = [dataset.to_json_struct() for dataset in datasets]
+        with dump_path.open("w") as out_json:
+            out_json.write(json.dumps(json_data, indent=2, sort_keys=True))

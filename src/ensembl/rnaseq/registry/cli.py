@@ -74,7 +74,8 @@ def change_component(args):
 
     elif args.list:
         components = reg.list_components()
-        print(components)
+        for component in components:
+            print(component)
 
 
 def change_organism(args):
@@ -96,8 +97,9 @@ def change_organism(args):
         reg.remove_organism(args.remove)
 
     elif args.list:
-        organisms = reg.list_organisms()
-        print(organisms)
+        organisms = reg.list_organisms(args.component)
+        for organism in organisms:
+            print(organism)
 
     elif args.load:
         loaded_count = reg.load_organisms(args.load)
@@ -112,13 +114,22 @@ def change_dataset(args):
     if args.load:
         loaded_count = reg.load_datasets(args.load)
         print(f"Loaded {loaded_count} datasets")
+    else:
+        datasets = reg.list_datasets(
+            component=args.component, organism=args.organism, dataset_name=args.dataset
+        )
 
-    elif args.get:
-        dataset = reg.get_dataset(args.get)
-        print(dataset)
+        if args.list:
+            print(f"{len(datasets)} datasets selected")
+            for dataset in datasets:
+                print(dataset)
 
-    elif args.remove:
-        reg.remove_dataset(args.remove)
+        if args.remove:
+            for dataset in datasets:
+                reg.remove_dataset(dataset)
+
+        if args.dump_file:
+            reg.dump_datasets(Path(args.dump_file), datasets)
 
 
 def main() -> None:
@@ -141,7 +152,7 @@ def main() -> None:
     component_parser.add_argument("--get", help="Name of a component to show")
     component_parser.add_argument("--list", action="store_true", help="Print the list of components")
 
-    # Component submenu
+    # Organism submenu
     organism_parser = subparsers.add_parser("organism")
     organism_parser.set_defaults(func=change_organism)
     organism_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
@@ -159,8 +170,12 @@ def main() -> None:
     dataset_parser.set_defaults(func=change_dataset)
     dataset_parser.add_argument("database", help="SQLite3 RNA-Seq registry database")
     dataset_parser.add_argument("--load", help="Dataset data to load in json format")
-    dataset_parser.add_argument("--get", help="Name of a dataset to show")
-    dataset_parser.add_argument("--remove", help="Name of a dataset to remove")
+    dataset_parser.add_argument("--component", help="Filter with a component")
+    dataset_parser.add_argument("--organism", help="Filter with an organism")
+    dataset_parser.add_argument("--dataset", help="Filter with a dataset name")
+    dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
+    dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
+    dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")
 
     # Parse args and start the submenu action
     args = parser.parse_args()

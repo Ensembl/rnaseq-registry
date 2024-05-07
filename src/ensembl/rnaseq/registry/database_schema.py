@@ -15,17 +15,54 @@
 
 """Schema in SQLAlchemy to describe RNA-Seq datasets."""
 
-from typing import List
+from typing import Dict, List
 from sqlalchemy import String, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import DeclarativeBase, Mapped
 from sqlalchemy.orm import mapped_column, relationship
 
 
-__all__ = ["Base", "Dataset", "Sample", "Organism"]
+__all__ = ["Base", "Component", "Organism", "Dataset", "Sample", "Accession"]
 
 
 class Base(DeclarativeBase):
     """Import declarative Base."""
+
+
+class Component(Base):
+    """Create a table component"""
+
+    __tablename__ = "component"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    name: Mapped[str] = mapped_column(String, unique=True)
+
+    # Relationships
+    organisms: Mapped[List["Organism"]] = relationship(back_populates="component", cascade="all")
+
+    def __repr__(self) -> str:
+        return f"component(name={self.name!r}, organisms={len(self.organisms)})"
+
+    def __str__(self) -> str:
+        line = [self.name, f"({len(self.organisms)} organisms)"]
+        return "\t".join(line)
+
+
+class Organism(Base):
+    """Create a table organism"""
+
+    __tablename__ = "organism"
+    id: Mapped[int] = mapped_column(primary_key=True)
+    abbrev: Mapped[str] = mapped_column(String, unique=True)
+    component_id: Mapped[int] = mapped_column(ForeignKey("component.id"))
+    component: Mapped["Component"] = relationship(back_populates="organisms")
+    datasets: Mapped[List["Dataset"]] = relationship(back_populates="organism")
+
+    def __repr__(self) -> str:
+        return f"organism(abbrev={self.abbrev!r}, component={self.component.name!r})"
+
+    def __str__(self) -> str:
+        n_datasets = len(self.datasets)
+        line = [self.component.name, self.abbrev, f"({n_datasets} datasets)"]
+        return "\t".join(line)
 
 
 class Dataset(Base):
@@ -43,7 +80,26 @@ class Dataset(Base):
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
 
     def __repr__(self) -> str:
-        return f"dataset(name={self.name!r}, samples={self.samples!r})"
+        return f"dataset(from={self.organism}, name={self.name!r}, samples={self.samples!r})"
+
+    def __str__(self) -> str:
+        n_samples = len(self.samples)
+        line = [self.organism.component.name, self.organism.abbrev, self.name, f"({n_samples} samples)"]
+        return "\t".join(line)
+
+    def to_json_struct(self) -> Dict:
+        """Represent the data ready to be dumped as json."""
+        dataset_struct: Dict = {
+            "component": self.organism.component.name,
+            "species": self.organism.abbrev,
+            "name": self.name,
+        }
+        runs: List[Dict] = []
+        for sample in self.samples:
+            accessions = [acc.sra_id for acc in sample.accessions]
+            runs.append({"name": sample.name, "accessions": accessions})
+        dataset_struct["runs"] = runs
+        return dataset_struct
 
 
 class Sample(Base):
@@ -75,31 +131,3 @@ class Accession(Base):
 
     def __repr__(self) -> str:
         return f"accession(sra_id={self.sra_id!r}, samples={self.sample!r})"
-
-
-class Organism(Base):
-    """Create a table organism"""
-
-    __tablename__ = "organism"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    abbrev: Mapped[str] = mapped_column(String, unique=True)
-    component_id: Mapped[int] = mapped_column(ForeignKey("component.id"))
-    component: Mapped["Component"] = relationship(back_populates="organisms")
-    datasets: Mapped["Dataset"] = relationship(back_populates="organism")
-
-    def __repr__(self) -> str:
-        return f"organism(abbrv={self.abbrev!r}, component={self.component.name!r})"
-
-
-class Component(Base):
-    """Create a table component"""
-
-    __tablename__ = "component"
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String, unique=True)
-
-    # Relationships
-    organisms: Mapped[List[Organism]] = relationship(back_populates="component", cascade="all")
-
-    def __repr__(self) -> str:
-        return f"component(name={self.name!r}, organisms={len(self.organisms)})"

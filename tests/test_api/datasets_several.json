@@ -1,0 +1,41 @@
+[
+ {
+  "component": "TestDB",
+  "species": "speciesA",
+  "name": "dataset_A1",
+  "runs": [
+   {
+    "accessions": [
+     "SRR18473710"
+    ],
+    "name": "female"
+   }
+  ]
+ },
+ {
+  "component": "TestDB",
+  "species": "speciesA",
+  "name": "dataset_A2",
+  "runs": [
+   {
+    "accessions": [
+     "SRR18473713"
+    ],
+    "name": "pupae"
+   }
+  ]
+ },
+ {
+  "component": "TestDB",
+  "species": "speciesB",
+  "name": "dataset_A1",
+  "runs": [
+   {
+    "accessions": [
+     "SRR18473711"
+    ],
+    "name": "female"
+   }
+  ]
+ }
+]
