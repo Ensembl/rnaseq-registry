@@ -213,18 +213,87 @@ class Test_RNASeqRegistry:
         with expectation:
             assert reg.load_datasets(data_dir / dataset_file, release=release)
 
-
     @pytest.mark.dependency(name="list_datasets")
     @pytest.mark.parametrize(
         "datasets_file, component, organism, dataset, in_release, out_release, number_expected, expectation",
         [
-            pytest.param("datasets_several.json", None, None, None, 10, None, 3, does_not_raise(), id="Get all datasets"),
-            pytest.param("datasets_several.json", None, None, None, 10, 10, 3, does_not_raise(), id="Get all datasets for this release"),
-            pytest.param("datasets_several.json", None, "speciesA", "dataset_A1", 10, None, 1, does_not_raise(), id="Get 1 exact dataset"),
-            pytest.param("datasets_several.json", None, "speciesA", None, 10, None, 2, does_not_raise(), id="Datasets for 1 species"),
-            pytest.param("datasets_several.json", "TestDB", None, None, 10, None, 3, does_not_raise(), id="Datasets for 1 component"),
-            pytest.param("datasets_several.json", "NoDB", None, None, 10, None, 0, does_not_raise(), id="Unknown component"),
-            pytest.param("datasets_several.json", "TestDB", "LOREM", None, 10, None, 0, does_not_raise(), id="Unknown species"),
+            pytest.param(
+                "datasets_several.json",
+                None,
+                None,
+                None,
+                10,
+                None,
+                3,
+                does_not_raise(),
+                id="Get all datasets",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                None,
+                None,
+                None,
+                10,
+                10,
+                3,
+                does_not_raise(),
+                id="Get all datasets for this release",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                None,
+                "speciesA",
+                "dataset_A1",
+                10,
+                None,
+                1,
+                does_not_raise(),
+                id="Get 1 exact dataset",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                None,
+                "speciesA",
+                None,
+                10,
+                None,
+                2,
+                does_not_raise(),
+                id="Datasets for 1 species",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                "TestDB",
+                None,
+                None,
+                10,
+                None,
+                3,
+                does_not_raise(),
+                id="Datasets for 1 component",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                "NoDB",
+                None,
+                None,
+                10,
+                None,
+                0,
+                does_not_raise(),
+                id="Unknown component",
+            ),
+            pytest.param(
+                "datasets_several.json",
+                "TestDB",
+                "LOREM",
+                None,
+                10,
+                None,
+                0,
+                does_not_raise(),
+                id="Unknown species",
+            ),
         ],
     )
     def test_list_datasets(
@@ -252,9 +321,10 @@ class Test_RNASeqRegistry:
         else:
             reg.load_datasets(data_dir / datasets_file)
         with expectation:
-            datasets = reg.list_datasets(component=component, organism=organism, dataset_name=dataset, release=out_release)
+            datasets = reg.list_datasets(
+                component=component, organism=organism, dataset_name=dataset, release=out_release
+            )
             assert len(datasets) == number_expected
-
 
     @pytest.mark.dependency(name="remove_dataset", depends=["list_datasets"])
     @pytest.mark.parametrize(
@@ -262,9 +332,7 @@ class Test_RNASeqRegistry:
         [
             pytest.param("speciesA", "dataset_A1", 1, id="OK dataset"),
             pytest.param("speciesA", "datasets_Lorem_Ipsum", 0, id="Dataset does not exist"),
-            pytest.param(
-                "species_FOOBAR", "datasets_Lorem_Ipsum", 0, id="Organism does not exist"
-            ),
+            pytest.param("species_FOOBAR", "datasets_Lorem_Ipsum", 0, id="Organism does not exist"),
         ],
     )
     def test_remove_dataset(
@@ -288,7 +356,6 @@ class Test_RNASeqRegistry:
         assert len(datasets) == deleted_num
         for dataset in datasets:
             reg.remove_dataset(dataset)
-
 
     @pytest.mark.dependency(name="dump_datasets", depends=["list_datasets"])
     @pytest.mark.parametrize(
@@ -324,6 +391,8 @@ class Test_RNASeqRegistry:
         reg.load_datasets(data_dir / datasets_file, release=fake_release)
         dumped_path = tmp_path / "output_dump.json"
         with expectation:
-            datasets = reg.list_datasets(component=component, organism=organism, dataset_name=dataset, release=release)
+            datasets = reg.list_datasets(
+                component=component, organism=organism, dataset_name=dataset, release=release
+            )
             reg.dump_datasets(dumped_path, datasets)
             assert_files(dumped_path, data_dir / expected_dumped_file)

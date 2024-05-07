@@ -121,7 +121,11 @@ def change_dataset(args):
         if args.not_latest:
             latest = False
         datasets = reg.list_datasets(
-            component=args.component, organism=args.organism, dataset_name=args.dataset, release=args.release, latest=latest
+            component=args.component,
+            organism=args.organism,
+            dataset_name=args.dataset,
+            release=args.release,
+            latest=latest,
         )
 
         if args.list:
@@ -175,7 +179,9 @@ def main() -> None:
     organism_parser.add_argument("--remove", help="Name of a organism to remove")
     organism_parser.add_argument("--get", help="Name of a organism to show")
     organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
-    organism_parser.add_argument("--with_datasets", action="store_true", help="Print the list of organisms with datasets")
+    organism_parser.add_argument(
+        "--with_datasets", action="store_true", help="Print the list of organisms with datasets"
+    )
     organism_parser.add_argument(
         "--load", help="Load organism abbrevs and components from a tab file (component\torganism_abbrev)"
     )
@@ -191,12 +197,8 @@ def main() -> None:
     dataset_parser.add_argument(
         "--release", help="Filter with a release (or use this value to load as default)"
     )
-    dataset_parser.add_argument(
-        "--not_latest", action="store_true", help="Show retired datasets"
-    )
-    dataset_parser.add_argument(
-        "--retire", help="Retire the datasets from the list"
-    )
+    dataset_parser.add_argument("--not_latest", action="store_true", help="Show retired datasets")
+    dataset_parser.add_argument("--retire", help="Retire the datasets from the list")
     dataset_parser.add_argument(
         "--replace", action="store_true", help="Replace duplicate datasets when loading"
     )

@@ -42,7 +42,7 @@ class Component(Base):
         return f"component(name={self.name!r}, organisms={len(self.organisms)})"
 
     def __str__(self) -> str:
-        datasets_count = sum([len(org.datasets) for org in self.organisms])
+        datasets_count = sum(len(org.datasets) for org in self.organisms)
         line = [self.name, f"({len(self.organisms)} organisms)", f"({datasets_count} datasets)"]
         return "\t".join(line)
 
@@ -85,7 +85,10 @@ class Dataset(Base):
     samples: Mapped[List["Sample"]] = relationship(back_populates="dataset", cascade="all")
 
     def __repr__(self) -> str:
-        return f"dataset(from={self.organism!r}, name={self.name!r}, samples={len(self.samples)}, retired={self.retired})"
+        return (
+            f"dataset(from={self.organism!r}, name={self.name!r}, "
+            f"samples={len(self.samples)}, retired={self.retired})"
+        )
 
     def __str__(self) -> str:
         n_samples = len(self.samples)
