@@ -203,6 +203,48 @@ class RnaseqRegistry:
 
         return loaded_count
 
+    def _check_json_data(
+        self,
+        json_data: List[Dict],
+        cur_datasets: Dict[str, Dict],
+        abbrevs: Dict[str, Organism],
+        release: Optional[int] = None,
+        replace: bool = False,
+    ) -> List[Dict]:
+        """Check the organism and that the dataset is not already in the registry.
+
+        If the organism does't exist, add it if `replace` is set, otherwise skip that dataset.
+        If the dataset already exists, retire if `replace` is set, otherwise skip that dataset.
+        """
+        checked_json_data = []
+        for dataset in json_data:
+            component = dataset["component"]
+            organism_name = dataset["species"]
+            if not organism_name in abbrevs:
+                if replace:
+                    print(f"ADD organism '{organism_name}' not in the registry")
+                    org = self.add_organism(organism_name, component)
+                    abbrevs[organism_name] = org
+                else:
+                    print(f"SKIP organism '{organism_name}' not in the registry")
+                    continue
+            try:
+                cur_dataset: Dataset = cur_datasets[organism_name][dataset["name"]]
+                if cur_dataset is not None:
+                    if replace:
+                        print(f"REPLACE dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
+                        self.retire_dataset(cur_dataset, release)
+                    else:
+                        print(
+                            f"SKIP dataset {organism_name}/{dataset['name']} already in {cur_dataset.release}"
+                        )
+                        continue
+            except KeyError:
+                pass
+            checked_json_data.append(dataset)
+
+        return checked_json_data
+
     def load_datasets(
         self, input_file: PathLike, release: int = 0, replace: bool = False, ignore: bool = False
     ) -> int:
@@ -231,32 +273,9 @@ class RnaseqRegistry:
             cur_datasets[cur_dataset_tmp.organism.abbrev][cur_dataset_tmp.name] = cur_dataset_tmp
 
         # First run to check if the datasets are already loaded
-        checked_json_data = []
-        for dataset in json_data:
-            component = dataset["component"]
-            organism_name = dataset["species"]
-            if not organism_name in abbrevs:
-                if replace:
-                    print(f"ADD organism '{organism_name}' not in the registry")
-                    org = self.add_organism(organism_name, component)
-                    abbrevs[organism_name] = org
-                else:
-                    print(f"SKIP organism '{organism_name}' not in the registry")
-                    continue
-            try:
-                cur_dataset: Dataset = cur_datasets[organism_name][dataset["name"]]
-                if cur_dataset is not None:
-                    if replace:
-                        print(f"REPLACE dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
-                        self.retire_dataset(cur_dataset, release)
-                    else:
-                        print(f"SKIP dataset {organism_name}/{dataset['name']} already in {cur_dataset.release}")
-                        continue
-            except KeyError:
-                pass
-
-            checked_json_data.append(dataset)
-
+        checked_json_data = self._check_json_data(
+            json_data, cur_datasets=cur_datasets, abbrevs=abbrevs, replace=replace, release=release
+        )
         diff_data = len(json_data) - len(checked_json_data)
         if diff_data > 0:
             if not ignore:
@@ -298,7 +317,12 @@ class RnaseqRegistry:
         self.session.commit()
 
     def list_datasets(
-        self, component: Optional[str] = None, organism: Optional[str] = None, dataset_name: Optional[str] = None, release: Optional[int] = None, latest: Optional[bool] = True,
+        self,
+        component: Optional[str] = None,
+        organism: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        release: Optional[int] = None,
+        latest: Optional[bool] = True,
     ) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
@@ -312,7 +336,9 @@ class RnaseqRegistry:
                 joinedload(Dataset.samples),
                 joinedload(Dataset.organism),
             )
-            .order_by(Dataset.release, Component.name, Organism.abbrev, Dataset.name, Sample.name, Accession.sra_id)
+            .order_by(
+                Dataset.release, Component.name, Organism.abbrev, Dataset.name, Sample.name, Accession.sra_id
+            )
         )
         if component:
             stmt = stmt.where(Component.name == component)
