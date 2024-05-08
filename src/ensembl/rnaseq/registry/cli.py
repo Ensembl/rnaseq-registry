@@ -131,6 +131,9 @@ def change_dataset(args):
         if args.dump_file:
             reg.dump_datasets(Path(args.dump_file), datasets)
 
+        if args.dump_folder:
+            reg.dump_datasets_folder(Path(args.dump_folder), datasets)
+
 
 def main() -> None:
     """Main script entry-point."""
@@ -176,6 +179,7 @@ def main() -> None:
     dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
     dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
     dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")
+    dataset_parser.add_argument("--dump_folder", help="Dump the selected datasets to files in a folder structure")
 
     # Parse args and start the submenu action
     args = parser.parse_args()
