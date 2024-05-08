@@ -15,6 +15,7 @@
 """RNA-Seq registry API module."""
 
 import json
+import logging
 from typing import Dict, List, Optional
 from pathlib import Path
 from os import PathLike
@@ -118,10 +119,9 @@ class RnaseqRegistry:
         return new_org
 
     def get_organism(self, name: str) -> Organism:
-        """Retrieve an organism.
+        """Retrieve an organism by its abbrev.
 
-        Args:
-        name : Name of the organism.
+        Raises ValueError if the organism can not be found.
         """
         stmt = select(Organism).options(joinedload(Organism.component)).where(Organism.abbrev == name)
 
@@ -353,6 +353,29 @@ class RnaseqRegistry:
 
         datasets = self.session.scalars(stmt).unique()
         return list(datasets)
+
+    def remap(self, org_from: str, org_to: str, release: int = 0) -> None:
+        """Remap all datasets from one organism to another."""
+        datasets_from = self.list_datasets(organism=org_from)
+        if not datasets_from:
+            logging.warning(f"No datasets from {org_from} to remap")
+            return
+        logging.info(f"Remap {len(datasets_from)} datasets from {org_from} to {org_to}")
+
+        new_org = self.get_organism(org_to)
+        # Deep copy each dataset - samples - accessions
+        new_datasets = []
+        for old_dataset in datasets_from:
+            new_samples = []
+            for old_sample in old_dataset.samples:
+                new_accessions = [Accession(sra_id=acc.sra_id) for acc in old_sample.accessions]
+                new_samples.append(Sample(name=old_sample.name, accessions=new_accessions))
+            new_datasets.append(
+                Dataset(name=old_dataset.name, organism_id=new_org.id, samples=new_samples, release=release)
+            )
+
+        self.session.add_all(new_datasets)
+        self.session.commit()
 
     def dump_datasets(self, dump_path: Path, datasets: List[Dataset]) -> None:
         """Print the datasets to a file.

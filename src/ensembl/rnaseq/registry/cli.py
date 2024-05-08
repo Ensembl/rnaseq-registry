@@ -18,6 +18,7 @@
 Can be imported as a module and called as a script as well, with the same parameters and expected outcome.
 """
 
+import logging
 from os import PathLike
 from pathlib import Path
 
@@ -116,6 +117,13 @@ def change_dataset(args):
             args.load, release=args.release, replace=args.replace, ignore=args.ignore
         )
         print(f"Loaded {loaded_count} datasets")
+
+    elif args.remap:
+        orgs = str(args.remap).split(",")
+        if len(orgs) != 2:
+            logging.warning("Remap requires 2 organism abbrevs separated by a comma")
+            return
+        reg.remap(orgs[0].strip(), orgs[1].strip(), args.release)
     else:
         latest = True
         if args.not_latest:
@@ -208,6 +216,10 @@ def main() -> None:
     dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
     dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
     dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")
+    dataset_parser.add_argument(
+        "--remap",
+        help="Remap all datasets from one organism to another (2 abbrevs comma separated, e.g 'orgA,orgB')",
+    )
 
     # Parse args and start the submenu action
     args = parser.parse_args()
