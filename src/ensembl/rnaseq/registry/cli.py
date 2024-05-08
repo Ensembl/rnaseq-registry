@@ -179,7 +179,9 @@ def main() -> None:
     dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
     dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
     dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")
-    dataset_parser.add_argument("--dump_folder", help="Dump the selected datasets to files in a folder structure")
+    dataset_parser.add_argument(
+        "--dump_folder", help="Dump the selected datasets to files in a folder structure"
+    )
 
     # Parse args and start the submenu action
     args = parser.parse_args()

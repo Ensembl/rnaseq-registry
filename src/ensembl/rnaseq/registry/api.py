@@ -296,7 +296,6 @@ class RnaseqRegistry:
         datasets: List of datasets to dump.
 
         """
-        json_data = [dataset.to_json_struct() for dataset in datasets]
         for dataset in datasets:
             folder_path: Path = dump_path / f"build_{dataset.release}" / dataset.organism.component.name
             folder_path.mkdir(parents=True, exist_ok=True)
