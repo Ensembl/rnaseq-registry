@@ -232,7 +232,7 @@ class RnaseqRegistry:
                 cur_dataset: Dataset = cur_datasets[organism_name][dataset["name"]]
                 if cur_dataset is not None:
                     if replace:
-                        print(f"REPLACE dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
+                        print(f"Retire dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
                         self.retire_dataset(cur_dataset, release)
                     else:
                         print(
@@ -253,6 +253,8 @@ class RnaseqRegistry:
         Args:
         input_file : Path to the input json file.
         release: Release number for that dataset.
+        replace: Replace a dataset.
+        ignore: Ignore the loaded datasets.
         """
         # Validate the json file
         json_schema_file = _RNASEQ_SCHEMA_PATH
