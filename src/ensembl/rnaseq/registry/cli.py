@@ -152,6 +152,9 @@ def change_dataset(args):
         if args.dump_file:
             reg.dump_datasets(Path(args.dump_file), datasets)
 
+        if args.dump_folder:
+            reg.dump_datasets_folder(Path(args.dump_folder), datasets)
+
 
 def do_nothing(_) -> None:
     """If no subparser argument, do nothing"""
@@ -219,6 +222,9 @@ def main() -> None:
     dataset_parser.add_argument(
         "--remap",
         help="Remap all datasets from one organism to another (2 abbrevs comma separated, e.g 'orgA,orgB')",
+    )
+    dataset_parser.add_argument(
+        "--dump_folder", help="Dump the selected datasets to files in a folder structure"
     )
 
     # Parse args and start the submenu action

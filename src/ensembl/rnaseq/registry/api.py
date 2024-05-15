@@ -232,7 +232,7 @@ class RnaseqRegistry:
                 cur_dataset: Dataset = cur_datasets[organism_name][dataset["name"]]
                 if cur_dataset is not None:
                     if replace:
-                        print(f"REPLACE dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
+                        print(f"Retire dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
                         self.retire_dataset(cur_dataset, release)
                     else:
                         print(
@@ -253,6 +253,8 @@ class RnaseqRegistry:
         Args:
         input_file : Path to the input json file.
         release: Release number for that dataset.
+        replace: Replace a dataset.
+        ignore: Ignore the loaded datasets.
         """
         # Validate the json file
         json_schema_file = _RNASEQ_SCHEMA_PATH
@@ -388,3 +390,18 @@ class RnaseqRegistry:
         json_data = [dataset.to_json_struct() for dataset in datasets]
         with dump_path.open("w") as out_json:
             out_json.write(json.dumps(json_data, indent=2, sort_keys=True))
+
+    def dump_datasets_folder(self, dump_path: Path, datasets: List[Dataset]) -> None:
+        """Print the datasets to files in a folder structure: build_xx/component/orgAbbrev_dataset_name.json
+
+        Args:
+        dump_path: Path to a folder to dump the data.
+        datasets: List of datasets to dump.
+
+        """
+        for dataset in datasets:
+            folder_path: Path = dump_path / f"build_{dataset.release}" / dataset.organism.component.name
+            folder_path.mkdir(parents=True, exist_ok=True)
+            file_path = folder_path / f"{dataset.organism.abbrev}_{dataset.name}.json"
+            with file_path.open("w") as out_json:
+                out_json.write(json.dumps(dataset.to_json_struct(), indent=2, sort_keys=True))
