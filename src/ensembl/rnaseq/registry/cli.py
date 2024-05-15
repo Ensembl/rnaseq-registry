@@ -97,7 +97,7 @@ def change_organism(args):
         reg.remove_organism(args.remove)
 
     elif args.list:
-        organisms = reg.list_organisms(args.component)
+        organisms = reg.list_organisms(args.component, args.with_datasets)
         for organism in organisms:
             print(organism)
 
@@ -112,15 +112,24 @@ def change_dataset(args):
     reg = RnaseqRegistry(engine)
 
     if args.load:
-        loaded_count = reg.load_datasets(args.load)
+        loaded_count = reg.load_datasets(
+            args.load, release=args.release, replace=args.replace, ignore=args.ignore
+        )
         print(f"Loaded {loaded_count} datasets")
     else:
+        latest = True
+        if args.not_latest:
+            latest = False
         datasets = reg.list_datasets(
-            component=args.component, organism=args.organism, dataset_name=args.dataset
+            component=args.component,
+            organism=args.organism,
+            dataset_name=args.dataset,
+            release=args.release,
+            latest=latest,
         )
 
         if args.list:
-            print(f"{len(datasets)} datasets selected")
+            # print(f"{len(datasets)} datasets selected")
             for dataset in datasets:
                 print(dataset)
 
@@ -128,14 +137,23 @@ def change_dataset(args):
             for dataset in datasets:
                 reg.remove_dataset(dataset)
 
+        if args.retire:
+            for dataset in datasets:
+                reg.retire_dataset(dataset, args.retire)
+
         if args.dump_file:
             reg.dump_datasets(Path(args.dump_file), datasets)
+
+
+def do_nothing(_) -> None:
+    """If no subparser argument, do nothing"""
 
 
 def main() -> None:
     """Main script entry-point."""
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(help="Subcommands")
+    parser.set_defaults(func=do_nothing)
 
     # Create submenu
     create_parser = subparsers.add_parser("create")
@@ -162,6 +180,9 @@ def main() -> None:
     organism_parser.add_argument("--get", help="Name of a organism to show")
     organism_parser.add_argument("--list", action="store_true", help="Print the list of organisms")
     organism_parser.add_argument(
+        "--with_datasets", action="store_true", help="Print the list of organisms with datasets"
+    )
+    organism_parser.add_argument(
         "--load", help="Load organism abbrevs and components from a tab file (component\torganism_abbrev)"
     )
 
@@ -173,6 +194,17 @@ def main() -> None:
     dataset_parser.add_argument("--component", help="Filter with a component")
     dataset_parser.add_argument("--organism", help="Filter with an organism")
     dataset_parser.add_argument("--dataset", help="Filter with a dataset name")
+    dataset_parser.add_argument(
+        "--release", help="Filter with a release (or use this value to load as default)"
+    )
+    dataset_parser.add_argument("--not_latest", action="store_true", help="Show retired datasets")
+    dataset_parser.add_argument("--retire", help="Retire the datasets from the list")
+    dataset_parser.add_argument(
+        "--replace", action="store_true", help="Replace duplicate datasets when loading"
+    )
+    dataset_parser.add_argument(
+        "--ignore", action="store_true", help="Ignore duplicate datasets when loading and load the rest"
+    )
     dataset_parser.add_argument("--remove", action="store_true", help="Remove the selected datasets")
     dataset_parser.add_argument("--list", action="store_true", help="Show the selected datasets")
     dataset_parser.add_argument("--dump_file", help="Dump the selected datasets to this file")
@@ -180,11 +212,7 @@ def main() -> None:
     # Parse args and start the submenu action
     args = parser.parse_args()
 
-    try:
-        args.func(args)
-    except AttributeError as err:
-        print(err)
-        parser.print_help()
+    args.func(args)
 
 
 if __name__ == "__main__":

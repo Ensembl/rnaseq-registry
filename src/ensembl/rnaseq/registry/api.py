@@ -15,7 +15,7 @@
 """RNA-Seq registry API module."""
 
 import json
-from typing import List, Optional
+from typing import Dict, List, Optional
 from pathlib import Path
 from os import PathLike
 
@@ -27,10 +27,15 @@ from ensembl.rnaseq.registry.database_schema import Base, Component, Organism, D
 
 __all__ = [
     "RnaseqRegistry",
+    "DBValueError",
 ]
 
 cur_dir = Path(__file__).parent
 _RNASEQ_SCHEMA_PATH = Path(cur_dir, "schemas/brc4_rnaseq_schema.json")
+
+
+class DBValueError(Exception):
+    """Raise if there is an issue with a data to enter in the database."""
 
 
 class RnaseqRegistry:
@@ -136,7 +141,7 @@ class RnaseqRegistry:
         self.session.delete(organism)
         self.session.commit()
 
-    def list_organisms(self, component: Optional[str] = None) -> List[Organism]:
+    def list_organisms(self, component: Optional[str] = None, with_dataset: bool = False) -> List[Organism]:
         """List all organisms.
 
         Args:
@@ -147,6 +152,8 @@ class RnaseqRegistry:
         if component:
             stmt = stmt.where(Component.name == component)
         organisms = list(self.session.scalars(stmt).all())
+        if with_dataset:
+            organisms = [org for org in organisms if len(org.datasets) > 0]
         return organisms
 
     def load_organisms(self, input_file: PathLike) -> int:
@@ -196,11 +203,58 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def load_datasets(self, input_file: PathLike) -> int:
+    def _check_json_data(
+        self,
+        json_data: List[Dict],
+        cur_datasets: Dict[str, Dict],
+        abbrevs: Dict[str, Organism],
+        release: Optional[int] = None,
+        replace: bool = False,
+    ) -> List[Dict]:
+        """Check the organism and that the dataset is not already in the registry.
+
+        If the organism does't exist, add it if `replace` is set, otherwise skip that dataset.
+        If the dataset already exists, retire if `replace` is set, otherwise skip that dataset.
+        """
+        checked_json_data = []
+        for dataset in json_data:
+            component = dataset["component"]
+            organism_name = dataset["species"]
+            if not organism_name in abbrevs:
+                if replace:
+                    print(f"ADD organism '{organism_name}' not in the registry")
+                    org = self.add_organism(organism_name, component)
+                    abbrevs[organism_name] = org
+                else:
+                    print(f"SKIP organism '{organism_name}' not in the registry")
+                    continue
+            try:
+                cur_dataset: Dataset = cur_datasets[organism_name][dataset["name"]]
+                if cur_dataset is not None:
+                    if replace:
+                        print(f"Retire dataset {organism_name}/{dataset['name']} from {cur_dataset.release}")
+                        self.retire_dataset(cur_dataset, release)
+                    else:
+                        print(
+                            f"SKIP dataset {organism_name}/{dataset['name']} already in {cur_dataset.release}"
+                        )
+                        continue
+            except KeyError:
+                pass
+            checked_json_data.append(dataset)
+
+        return checked_json_data
+
+    def load_datasets(
+        self, input_file: PathLike, release: int = 0, replace: bool = False, ignore: bool = False
+    ) -> int:
         """Import datasets from a json file.
 
         Args:
         input_file : Path to the input json file.
+        release: Release number for that dataset.
+        replace: Replace a dataset.
+        ignore: Ignore the loaded datasets.
         """
         # Validate the json file
         json_schema_file = _RNASEQ_SCHEMA_PATH
@@ -210,21 +264,39 @@ class RnaseqRegistry:
             schema = json.load(schema_fh)
         validate(instance=json_data, schema=schema)
 
-        # Load the datasets
+        # Get the existing abbrevs
         abbrevs = {org.abbrev: org for org in self.list_organisms()}
         new_datasets_list: List = []
         loaded_count = 0
-        for dataset in json_data:
+
+        # Get the existing datasets
+        cur_datasets: Dict[str, Dict] = {abb: {} for abb in abbrevs}
+        for cur_dataset_tmp in self.list_datasets():
+            cur_datasets[cur_dataset_tmp.organism.abbrev][cur_dataset_tmp.name] = cur_dataset_tmp
+
+        # First run to check if the datasets are already loaded
+        checked_json_data = self._check_json_data(
+            json_data, cur_datasets=cur_datasets, abbrevs=abbrevs, replace=replace, release=release
+        )
+        diff_data = len(json_data) - len(checked_json_data)
+        if diff_data > 0:
+            if not ignore:
+                print(f"{diff_data}/{len(json_data)} datasets can not be loaded (use --replace or --ignore)")
+                return 0
+
+        # Second run to actually add things
+        for dataset in checked_json_data:
             organism_name = dataset["species"]
-            if not organism_name in abbrevs:
-                print(f"Organism '{organism_name}' is not in the registry")
-                continue
             samples = []
             for run in dataset["runs"]:
                 accessions = [Accession(sra_id=acc) for acc in run["accessions"]]
                 samples.append(Sample(name=run["name"], accessions=accessions))
+            if "release" in dataset:
+                release = dataset["release"]
+
+            organism = abbrevs[organism_name]
             new_dataset = Dataset(
-                name=dataset["name"], organism_id=abbrevs[organism_name].id, samples=samples
+                name=dataset["name"], organism_id=organism.id, samples=samples, release=release
             )
             new_datasets_list.append(new_dataset)
             loaded_count += 1
@@ -234,42 +306,40 @@ class RnaseqRegistry:
 
         return loaded_count
 
-    def get_dataset(self, organism_name: str, dataset_name: str) -> Dataset:
-        """Retrieve a dataset for a given organism.
-
-        Args:
-        dataset_name : Name of the dataset.
-        organism_name : Organism abbrev associated with the dataset.
-        """
-        stmt = (
-            select(Dataset)
-            .join(Organism)
-            .options(
-                joinedload(Dataset.samples),
-            )
-            .where(Dataset.name == dataset_name)
-            .where(Organism.abbrev == organism_name)
-        )
-        dataset = self.session.scalars(stmt).first()
-        if not dataset:
-            raise ValueError(f"No dataset named {dataset_name} for {organism_name}")
-        return dataset
-
     def remove_dataset(self, dataset: Dataset) -> None:
         """Delete a dataset."""
         self.session.delete(dataset)
         self.session.commit()
 
-    def list_datasets(self, component: str = "", organism: str = "", dataset_name: str = "") -> List[Dataset]:
+    def retire_dataset(self, dataset: Dataset, release: Optional[int] = 0) -> None:
+        """Delete a dataset."""
+        dataset.latest = False
+        if release is not None:
+            dataset.retired = release
+        self.session.commit()
+
+    def list_datasets(
+        self,
+        component: Optional[str] = None,
+        organism: Optional[str] = None,
+        dataset_name: Optional[str] = None,
+        release: Optional[int] = None,
+        latest: Optional[bool] = True,
+    ) -> List[Dataset]:
         """Get all datasets with the provided filters."""
 
         stmt = (
             select(Dataset)
             .join(Organism)
             .join(Component)
+            .join(Sample)
+            .join(Accession)
             .options(
                 joinedload(Dataset.samples),
                 joinedload(Dataset.organism),
+            )
+            .order_by(
+                Dataset.release, Component.name, Organism.abbrev, Dataset.name, Sample.name, Accession.sra_id
             )
         )
         if component:
@@ -278,12 +348,22 @@ class RnaseqRegistry:
             stmt = stmt.where(Organism.abbrev == organism)
         if dataset_name:
             stmt = stmt.where(Dataset.name == dataset_name)
+        if release is not None:
+            stmt = stmt.where(Dataset.release == release)
+        if latest is not None:
+            stmt = stmt.where(Dataset.latest == latest)
 
         datasets = self.session.scalars(stmt).unique()
         return list(datasets)
 
     def dump_datasets(self, dump_path: Path, datasets: List[Dataset]) -> None:
-        """Write all datasets in one json file."""
+        """Print the datasets to a file.
+
+        Args:
+        dump_path: Path to a file to dump the data.
+        datasets: List of datasets to dump.
+
+        """
         json_data = [dataset.to_json_struct() for dataset in datasets]
         with dump_path.open("w") as out_json:
             out_json.write(json.dumps(json_data, indent=2, sort_keys=True))
