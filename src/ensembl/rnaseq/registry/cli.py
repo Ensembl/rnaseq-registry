@@ -124,7 +124,7 @@ def change_dataset(args):
             logging.warning("Remap requires 2 organism abbrevs separated by a comma")
             return
         reg.remap(orgs[0].strip(), orgs[1].strip(), args.release, args.retire)
-        
+
     else:
         latest = True
         if args.not_latest:

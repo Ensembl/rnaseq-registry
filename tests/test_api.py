@@ -361,12 +361,19 @@ class Test_RNASeqRegistry:
     @pytest.mark.parametrize(
         "datasets_file, org_from, org_to, retire",
         [
-            pytest.param("datasets_several.json", "speciesA", "speciesB", None,  id="Remap without retire"),
+            pytest.param("datasets_several.json", "speciesA", "speciesB", None, id="Remap without retire"),
             pytest.param("datasets_several.json", "speciesB", "speciesA", True, id="Remap with retire"),
         ],
     )
     def test_remap(
-        self, engine: Engine, data_dir: Path, datasets_file: str, org_from: str, org_to: str, retire: bool, shared_orgs_file: Path
+        self,
+        engine: Engine,
+        data_dir: Path,
+        datasets_file: str,
+        org_from: str,
+        org_to: str,
+        retire: bool,
+        shared_orgs_file: Path,
     ) -> None:
         """
         Test remapping datasets from one organism to another.
@@ -387,21 +394,21 @@ class Test_RNASeqRegistry:
         reg.create_db()
         reg.load_organisms(shared_orgs_file)
         reg.load_datasets(data_dir / datasets_file)
-    
+
         # Get the list of datasets for the target organism before remapping
         before_remap = reg.list_datasets(organism=org_to)
         before_remap_length = len(before_remap)
-    
+
         # Perform the remapping
         reg.remap(org_from, org_to, fake_release, retire)
-    
+
         # Get the list of datasets for the target organism after remapping
         after_remap = reg.list_datasets(organism=org_to)
         after_remap_length = len(after_remap)
-    
+
         # Check that datasets have been moved to the target organism
         assert after_remap_length > before_remap_length
-    
+
         # If retiring the source organism, ensure it has no datasets left
         if retire:
             after_remap_org_from = reg.list_datasets(organism=org_from)
