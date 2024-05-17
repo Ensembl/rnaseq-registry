@@ -29,7 +29,7 @@
   },
   {
     "component": "TestDB",
-    "name": "dataset_A1",
+    "name": "dataset_A3",
     "release": 0,
     "runs": [
       {

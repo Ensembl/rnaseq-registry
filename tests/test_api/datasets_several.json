@@ -28,7 +28,7 @@
  {
   "component": "TestDB",
   "species": "speciesB",
-  "name": "dataset_A1",
+  "name": "dataset_A3",
   "runs": [
    {
     "accessions": [
