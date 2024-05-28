@@ -356,10 +356,11 @@ class RnaseqRegistry:
         datasets = self.session.scalars(stmt).unique()
         return list(datasets)
 
-    def remap(self, org_from: str, org_to: str, release: int = 0, retire: Optional[int] = None) -> None:
+    def remap(
+        self, org_from: str, org_to: str, release: int = 0, retire_remapped: Optional[bool] = False
+    ) -> None:
         """Remap all datasets from one organism to another."""
         datasets_from = self.list_datasets(organism=org_from)
-        print(datasets_from)
         if not datasets_from:
             logging.warning(f"No datasets from {org_from} to remap")
             return
@@ -376,7 +377,7 @@ class RnaseqRegistry:
             new_datasets.append(
                 Dataset(name=old_dataset.name, organism_id=new_org.id, samples=new_samples, release=release)
             )
-        if retire:
+        if retire_remapped:
             for old_dataset in datasets_from:
                 logging.info(f"Retire dataset {org_from}/{old_dataset.name} from {old_dataset.release}")
                 self.retire_dataset(old_dataset, release)

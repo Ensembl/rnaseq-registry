@@ -123,7 +123,7 @@ def change_dataset(args):
         if len(orgs) != 2:
             logging.warning("Remap requires 2 organism abbrevs separated by a comma")
             return
-        reg.remap(orgs[0].strip(), orgs[1].strip(), args.release, args.retire)
+        reg.remap(orgs[0].strip(), orgs[1].strip(), args.release, args.retire_remapped)
 
     else:
         latest = True
@@ -223,6 +223,11 @@ def main() -> None:
     dataset_parser.add_argument(
         "--remap",
         help="Remap all datasets from one organism to another (2 abbrevs comma separated, e.g 'orgA,orgB')",
+    )
+    dataset_parser.add_argument(
+        "--retire_remapped",
+        action="store_true",
+        help="Retire the old datasets when remapped(2 abbrevs comma separated, e.g 'orgA,orgB')",
     )
     dataset_parser.add_argument(
         "--dump_folder", help="Dump the selected datasets to files in a folder structure"
