@@ -145,6 +145,24 @@ class Test_RNASeqRegistry:
 
     @pytest.mark.dependency(depends=["add_get_feature"])
     @pytest.mark.parametrize(
+    "organism_file, removed_organism, expectation",
+    [
+        pytest.param("organisms_ok.tab", "SpeciesA", does_not_raise(), id="Remove existing organism"),
+        pytest.param("organisms_ok.tab", "LOREM_IPSUM_A", raises(ValueError), id="Remove non-existing organism"),
+    ],
+    )
+    def test_remove_organism(
+        self,  data_dir: Path, engine: Engine, organism_file: Path, removed_organism: str, expectation: ContextManager) -> None:
+        """Test removing an organism."""
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(data_dir / organism_file)
+        with expectation:
+            reg.remove_organism(removed_organism)
+
+    @pytest.mark.dependency(depends=["add_get_feature"])
+    @pytest.mark.parametrize(
         "organism_file, component, organism, expectation",
         [
             pytest.param("organisms_ok.tab", "TestDB", "SpeciesA", does_not_raise(), id="Import organisms"),
