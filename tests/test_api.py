@@ -374,7 +374,37 @@ class Test_RNASeqRegistry:
         assert len(datasets) == deleted_num
         for dataset in datasets:
             reg.remove_dataset(dataset)
+    
+    @pytest.mark.dependency(depends=["list_datasets"])
+    @pytest.mark.parametrize(
+        "organism_name, dataset_name, expectation",
+        [
+            pytest.param("speciesA", "dataset_A1", does_not_raise(), id="OK to retire dataset"),
+            pytest.param("speciesA", "datasets_Lorem_Ipsum",raises(KeyError), id="Dataset does not exist"),
+        ],
+    )
+    def test_retire_dataset(
+        self,
+        engine: Engine,
+        shared_orgs_file: Path,
+        shared_dataset_file: Path,
+        organism_name: str,
+        dataset_name: str,
+        expectation: ContextManager, 
+    ) -> None:
+        """Test retire a dataset."""
+        fake_release = 10
 
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(shared_orgs_file)
+        reg.load_datasets(shared_dataset_file, release=fake_release)
+        datasets = reg.list_datasets(organism=organism_name, dataset_name=dataset_name)
+
+        for dataset in datasets:
+            with expectation: 
+                reg.retire_dataset(dataset)
+    
     @pytest.mark.dependency(name="dump_datasets", depends=["list_datasets"])
     @pytest.mark.parametrize(
         "datasets_file, expected_dumped_file, expectation",
