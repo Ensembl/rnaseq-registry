@@ -145,14 +145,22 @@ class Test_RNASeqRegistry:
 
     @pytest.mark.dependency(depends=["add_get_feature"])
     @pytest.mark.parametrize(
-    "organism_file, removed_organism, expectation",
-    [
-        pytest.param("organisms_ok.tab", "SpeciesA", does_not_raise(), id="Remove existing organism"),
-        pytest.param("organisms_ok.tab", "LOREM_IPSUM_A", raises(ValueError), id="Remove non-existing organism"),
-    ],
+        "organism_file, removed_organism, expectation",
+        [
+            pytest.param("organisms_ok.tab", "SpeciesA", does_not_raise(), id="Remove existing organism"),
+            pytest.param(
+                "organisms_ok.tab", "LOREM_IPSUM_A", raises(ValueError), id="Remove non-existing organism"
+            ),
+        ],
     )
     def test_remove_organism(
-        self,  data_dir: Path, engine: Engine, organism_file: Path, removed_organism: str, expectation: ContextManager) -> None:
+        self,
+        data_dir: Path,
+        engine: Engine,
+        organism_file: Path,
+        removed_organism: str,
+        expectation: ContextManager,
+    ) -> None:
         """Test removing an organism."""
 
         reg = RnaseqRegistry(engine)
@@ -374,13 +382,13 @@ class Test_RNASeqRegistry:
         assert len(datasets) == deleted_num
         for dataset in datasets:
             reg.remove_dataset(dataset)
-    
+
     @pytest.mark.dependency(depends=["list_datasets"])
     @pytest.mark.parametrize(
         "organism_name, dataset_name, expectation",
         [
             pytest.param("speciesA", "dataset_A1", does_not_raise(), id="OK to retire dataset"),
-            pytest.param("speciesA", "datasets_Lorem_Ipsum",raises(KeyError), id="Dataset does not exist"),
+            pytest.param("speciesA", "datasets_Lorem_Ipsum", raises(KeyError), id="Dataset does not exist"),
         ],
     )
     def test_retire_dataset(
@@ -390,7 +398,7 @@ class Test_RNASeqRegistry:
         shared_dataset_file: Path,
         organism_name: str,
         dataset_name: str,
-        expectation: ContextManager, 
+        expectation: ContextManager,
     ) -> None:
         """Test retire a dataset."""
         fake_release = 10
@@ -402,9 +410,9 @@ class Test_RNASeqRegistry:
         datasets = reg.list_datasets(organism=organism_name, dataset_name=dataset_name)
 
         for dataset in datasets:
-            with expectation: 
+            with expectation:
                 reg.retire_dataset(dataset)
-    
+
     @pytest.mark.dependency(name="dump_datasets", depends=["list_datasets"])
     @pytest.mark.parametrize(
         "datasets_file, expected_dumped_file, expectation",
@@ -449,9 +457,7 @@ class Test_RNASeqRegistry:
     @pytest.mark.parametrize(
         "datasets_file",
         [
-            pytest.param(
-                "datasets_several.json", id="Dump individual dataset files in folder"
-            ),
+            pytest.param("datasets_several.json", id="Dump individual dataset files in folder"),
         ],
     )
     def test_dump_datasets_folder(
@@ -474,9 +480,9 @@ class Test_RNASeqRegistry:
         reg.load_organisms(shared_orgs_file)
         reg.load_datasets(data_dir / datasets_file, release=fake_release)
         datasets = reg.list_datasets(
-                component=component, organism=organism, dataset_name=dataset, release=release
-            )
-        
+            component=component, organism=organism, dataset_name=dataset, release=release
+        )
+
         reg.dump_datasets_folder(tmp_path, datasets)
         for dataset in datasets:
             folder_path = tmp_path / f"build_{dataset.release}" / dataset.organism.component.name
