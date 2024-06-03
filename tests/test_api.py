@@ -444,3 +444,42 @@ class Test_RNASeqRegistry:
             )
             reg.dump_datasets(dumped_path, datasets)
             assert_files(dumped_path, data_dir / expected_dumped_file)
+
+    @pytest.mark.dependency(depends=["list_datasets"])
+    @pytest.mark.parametrize(
+        "datasets_file",
+        [
+            pytest.param(
+                "datasets_several.json", id="Dump individual dataset files in folder"
+            ),
+        ],
+    )
+    def test_dump_datasets_folder(
+        self,
+        data_dir: Path,
+        tmp_path: Path,
+        engine: Engine,
+        shared_orgs_file: Path,
+        datasets_file: Path,
+    ) -> None:
+        """Test dumping a dataset file in folder structure"""
+        component = None
+        organism = None
+        dataset = None
+        release = None
+        fake_release = 0
+
+        reg = RnaseqRegistry(engine)
+        reg.create_db()
+        reg.load_organisms(shared_orgs_file)
+        reg.load_datasets(data_dir / datasets_file, release=fake_release)
+        datasets = reg.list_datasets(
+                component=component, organism=organism, dataset_name=dataset, release=release
+            )
+        
+        reg.dump_datasets_folder(tmp_path, datasets)
+        for dataset in datasets:
+            folder_path = tmp_path / f"build_{dataset.release}" / dataset.organism.component.name
+            file_path = folder_path / f"{dataset.organism.abbrev}_{dataset.name}.json"
+            # Assert file were created
+            assert file_path.exists()
