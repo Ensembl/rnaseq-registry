@@ -87,7 +87,7 @@ class Dataset(Base):
     def __repr__(self) -> str:
         return (
             f"dataset(from={self.organism!r}, name={self.name!r}, "
-            f"samples={len(self.samples)}, retired={self.retired})"
+            f"samples={len(self.samples)}, retired={self.retired}, latest={self.latest})"
         )
 
     def __str__(self) -> str:
