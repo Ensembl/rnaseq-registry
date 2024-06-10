@@ -76,6 +76,7 @@ class Dataset(Base):
     release: Mapped[int] = mapped_column(Integer, default=0)
     retired: Mapped[int] = mapped_column(Integer, default=0)
     latest: Mapped[bool] = mapped_column(Boolean, default=True)
+    no_spliced: Mapped[bool] = mapped_column(Boolean, default=False)
 
     organism_id: Mapped[int] = mapped_column(ForeignKey("organism.id"))
     organism: Mapped["Organism"] = relationship(back_populates="datasets")
@@ -108,6 +109,8 @@ class Dataset(Base):
             "name": self.name,
             "release": self.release,
         }
+        if self.no_spliced:
+            dataset_struct["no_spliced"] = True
         runs: List[Dict] = []
         for sample in self.samples:
             accessions = [acc.sra_id for acc in sample.accessions]
