@@ -114,7 +114,10 @@ class Dataset(Base):
         runs: List[Dict] = []
         for sample in self.samples:
             accessions = [acc.sra_id for acc in sample.accessions]
-            runs.append({"name": sample.name, "accessions": accessions})
+            sample_data: Dict = {"name": sample.name, "accessions": accessions}
+            if sample.trim_reads:
+                sample_data["trim_reads"] = True
+            runs.append(sample_data)
         dataset_struct["runs"] = runs
         return dataset_struct
 
@@ -126,6 +129,7 @@ class Sample(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str] = mapped_column(String)
     dataset_id: Mapped[int] = mapped_column(ForeignKey("dataset.id"))
+    trim_reads: Mapped[bool] = mapped_column(Boolean, default=False)
 
     # Relationships
     dataset: Mapped["Dataset"] = relationship(back_populates="samples")

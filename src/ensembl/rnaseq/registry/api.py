@@ -290,6 +290,8 @@ class RnaseqRegistry:
             samples = []
             for run in dataset["runs"]:
                 accessions = [Accession(sra_id=acc) for acc in run["accessions"]]
+                trim_reads = run.get("trim_reads", False)
+                samples.append(Sample(name=run["name"], accessions=accessions, trim_reads=trim_reads))
 
             # Replace release (higher priority from file)
             if "release" in dataset:
