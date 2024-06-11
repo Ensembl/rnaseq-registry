@@ -16,6 +16,7 @@
   "component": "TestDB",
   "species": "speciesA",
   "name": "dataset_A2",
+  "no_spliced": true,
   "runs": [
    {
     "accessions": [
@@ -34,7 +35,8 @@
     "accessions": [
      "SRR18473711"
     ],
-    "name": "female"
+    "name": "female",
+    "trim_reads": true
    }
   ]
  }
