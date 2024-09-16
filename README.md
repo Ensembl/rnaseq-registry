@@ -6,7 +6,7 @@ The RNA-Seq registry is used to keep track of all the RNA-Seq datasets loaded fo
 
 ## Requirements
 
-Have the rnaseq-registry repo loaded and installed in your environment. For example:
+Have the rnaseq-registry repo loaded and installed in your environment (or better yet, in a virtual environment like penv). For example:
 
 ```bash
 cd $repo_dir
@@ -15,7 +15,7 @@ cd rnaseq-registry/
 pip install .
 ```
 
-Make sure you have the build version, used to distinguish different production releases e.g.
+Make sure you have a build version set in your environment, used to distinguish different production releases e.g.
 
 ```bash
 export BUILD_VERSION=70
@@ -49,7 +49,7 @@ The registry loads a json file in the format, containing unique dataset_name, or
 
 ## New datasets loading
 
-To add a new dataset to the registry, you need to create a new json file with the dataset.
+To add a new dataset to the registry, you need to create a new json file with the dataset. I.e. if you put your data in a file `all.json`:
 
 ```bash
 rnaseq_registry dataset $DB_FILE --release $BUILD_VERSION --load all.json
@@ -79,7 +79,7 @@ rnaseq_registry dataset $DB_FILE --remap $OLD_ORG,$NEW_ORG
 
 If you get an error No organism named NEW_ORG, add it yourself (make sure to provide the component database too):
 
-To add a new organism_abbrv
+To add a new organism_abbrev
 
 ```bash
 rnaseq_registry organism $DB_FILE --add $NEW_ORG --component $COMPONENT
